@@ -20,6 +20,7 @@
         <cluster name="bar" location="src/bar" recursive="false"/>
         <cluster name="formatter" location="src/formatter" recursive="false"/>
         <cluster name="internal" location="src/internal" recursive="false"/>
+        <cluster name="iteration" location="src/iteration" recursive="false"/>
         <cluster name="progress" location="src/progress" recursive="false"/>
     </target>
     <target name="pb_tests" extends="progress_bar">
@@ -31,6 +32,7 @@
         <cluster name="bar_tests" location="tests/bar" recursive="false"/>
         <cluster name="formatter_tests" location="tests/formatter" recursive="false"/>
         <cluster name="internal_tests" location="tests/internal" recursive="false"/>
+        <cluster name="iteration_tests" location="tests/iteration" recursive="false"/>
         <cluster name="progress_tests" location="tests/progress" recursive="false"/>
         <cluster name="testgen" location="build/testgen" recursive="false"/>
     </target>
