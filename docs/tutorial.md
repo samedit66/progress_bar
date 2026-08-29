@@ -92,6 +92,40 @@ The wrapper retains the source rather than copying it. Every `new_cursor` call,
 including every new `across`, creates an independent progress bar and observes
 the source's count at that time.
 
+## Traverse an integer range
+
+`PB_RANGE` specializes `PB_ITERABLE [INTEGER]` for an inclusive integer
+interval. Both bounds are visited:
+
+```eiffel
+local
+    progress: PB_RANGE
+do
+    create progress.make_from_to (1, 100)
+    across progress as index loop
+        process (index)
+    end
+end
+```
+
+The example traverses `1` through `100` and reports a known total of 100. Equal
+bounds produce one item. Reversed bounds produce a known empty traversal, which
+renders and finishes at `0 / 0` without entering the loop body.
+
+Use `make_from_to_with_formatter` to keep the same range semantics with any
+existing formatter callback:
+
+```eiffel
+create progress.make_from_to_with_formatter (
+    -2,
+    2,
+    formatters.standard ("Scanning", "indices", "complete")
+)
+```
+
+The progress cursor reports its absolute processed-item count through
+`PB_BAR.update`; callers do not update the bar from inside the `across` loop.
+
 ## Choose a built-in formatter
 
 `PB_FORMATTERS` supplies reusable agents:

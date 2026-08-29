@@ -85,6 +85,22 @@ If `items` also conforms to `FINITE [MY_ITEM]`, each traversal uses its
 `count`. Otherwise the cursor uses unknown-total progress. Every call to
 `new_cursor` owns an independent bar.
 
+Use `PB_RANGE` for an inclusive integer range with a known total:
+
+```eiffel
+local
+    progress: PB_RANGE
+do
+    create progress.make_from_to (1, 100)
+    across progress as index loop
+        process (index)
+    end
+end
+```
+
+Both bounds are included, so this example visits 100 values and finishes at
+`100 / 100`.
+
 To add labels and units, use a configured built-in formatter:
 
 ```eiffel
@@ -112,6 +128,7 @@ stateful formatter agents. A complete program is in
 | --- | --- |
 | [`PB_BAR`](src/bar/pb_bar.e) | Manually update known or unknown progress |
 | [`PB_ITERABLE [G]`](src/iteration/pb_iterable.e) | Add progress to an existing iterable |
+| [`PB_RANGE`](src/iteration/pb_range.e) | Traverse an inclusive integer range with progress |
 | [`PB_PROGRESS`](src/progress/pb_progress.e) | Immutable snapshot passed to a formatter |
 | [`PB_FORMATTERS`](src/formatter/pb_formatters.e) | Built-in and configured formatter agents |
 

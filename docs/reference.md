@@ -59,6 +59,25 @@ The cursor delegates `item` and `after` directly. Its `forth` first advances
 the source cursor, then reports one completed item, and finishes when the source
 cursor reaches `after`. Consequently the bar represents completed loop bodies.
 
+## `PB_RANGE`
+
+`PB_RANGE` is a `PB_ITERABLE [INTEGER]` backed by an `INTEGER_INTERVAL`.
+Creation procedures are:
+
+- `make_from_to (from, to)` for the default formatter;
+- `make_from_to_with_formatter (from, to, formatter)` for a supplied formatter
+  callback.
+
+Both bounds are inclusive. Equal bounds produce one item. When `from > to`, the
+range is empty and its fresh cursor renders and finishes known `0 / 0` progress.
+Every traversal otherwise has the same independent-bar and completed-loop-body
+semantics as `PB_ITERABLE [G]`.
+
+The cardinality of a non-empty range must fit in `INTEGER`, matching the
+`INTEGER_INTERVAL` and `FINITE.count` contract. The range validates this using
+wider arithmetic so that the check itself does not overflow near the limits of
+`INTEGER`.
+
 ## `PB_FORMATTERS`
 
 All formatter features return this contract:

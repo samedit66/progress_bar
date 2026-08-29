@@ -2,7 +2,7 @@ note
 
 	description:
 
-		"Demonstrate manual, unknown, and iterable progress."
+		"Demonstrate manual, unknown, iterable, and range progress."
 
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
@@ -23,6 +23,8 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 			items: ARRAYED_LIST [STRING]
 			progress: PB_ITERABLE [STRING]
+			range: PB_RANGE
+			range_sum: INTEGER
 			i: INTEGER_64
 		do
 			create formatters
@@ -77,6 +79,24 @@ feature {NONE} -- Initialization
 				item
 			loop
 				process (item)
+			end
+			create range.make_from_to_with_formatter (
+				1,
+				5,
+				formatters.standard (
+					"Range",
+					"indices",
+					"complete"
+				)
+			)
+			across
+				range
+			as
+				index
+			loop
+				range_sum :=
+					range_sum +
+						index
 			end
 		end
 
