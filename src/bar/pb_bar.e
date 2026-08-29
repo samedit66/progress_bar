@@ -1,11 +1,14 @@
 note
 
 	description:
+
 		"Manually updated terminal progress bar with agent-based formatting."
+
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class PB_BAR
+class
+	PB_BAR
 
 create
 
@@ -19,26 +22,33 @@ feature {NONE} -- Initialization
 	make (a_total: INTEGER_64)
 			-- Create progress with known `a_total` and the default formatter.
 		require
-			total_non_negative: a_total >= 0
+			total_non_negative: a_total >=
+				0
 		local
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize (True, a_total, formatters.basic)
+			initialize (
+				True,
+				a_total,
+				formatters.basic
+			)
 		ensure
 			total_known: has_total
 			total_set: total = a_total
 		end
 
-	make_with_formatter (
-		a_total: INTEGER_64;
-		a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
-	)
+	make_with_formatter (a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Create progress with known `a_total` rendered by `a_formatter`.
 		require
-			total_non_negative: a_total >= 0
+			total_non_negative: a_total >=
+				0
 		do
-			initialize (True, a_total, a_formatter)
+			initialize (
+				True,
+				a_total,
+				a_formatter
+			)
 		ensure
 			total_known: has_total
 			total_set: total = a_total
@@ -50,29 +60,32 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize (False, 0, formatters.basic)
+			initialize (
+				False,
+				0,
+				formatters.basic
+			)
 		ensure
 			total_unknown: not has_total
 		end
 
-	make_unknown_with_formatter (
-		a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
-	)
+	make_unknown_with_formatter (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Create progress with unknown total rendered by `a_formatter`.
 		do
-			initialize (False, 0, a_formatter)
+			initialize (
+				False,
+				0,
+				a_formatter
+			)
 		ensure
 			total_unknown: not has_total
 		end
 
-	initialize (
-		a_has_total: BOOLEAN;
-		a_total: INTEGER_64;
-		a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
-	)
+	initialize (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Initialize Current with one coherent progress mode.
 		require
-			total_non_negative: a_total >= 0
+			total_non_negative: a_total >=
+				0
 		do
 			has_total := a_has_total
 			stored_total := a_total
@@ -92,7 +105,8 @@ feature -- Access
 		do
 			Result := stored_total
 		ensure
-			non_negative: Result >= 0
+			non_negative: Result >=
+				0
 		end
 
 	revision: INTEGER_64
@@ -115,16 +129,20 @@ feature -- Progress
 			-- Set the current absolute position and refresh its presentation.
 		require
 			not_finished: not is_finished
-			current_non_negative: a_current >= 0
+			current_non_negative: a_current >=
+				0
 		do
 			position := a_current
-			revision := revision + 1
+			revision :=
+				revision +
+					1
 			is_started := True
 			refresh (False)
 		ensure
 			position_set: position = a_current
 			started: is_started
-			revision_advanced: revision = old revision + 1
+			revision_advanced: revision = old revision +
+				1
 		end
 
 	pulse
@@ -133,13 +151,16 @@ feature -- Progress
 			not_finished: not is_finished
 			total_unknown: not has_total
 		do
-			revision := revision + 1
+			revision :=
+				revision +
+					1
 			is_started := True
 			refresh (False)
 		ensure
 			position_unchanged: position = old position
 			started: is_started
-			revision_advanced: revision = old revision + 1
+			revision_advanced: revision = old revision +
+				1
 		end
 
 	finish
@@ -164,18 +185,34 @@ feature {NONE} -- Rendering
 			line: STRING_32
 		do
 			if has_total then
-				create progress.make_known (position, stored_total, revision, a_is_final)
+				create progress.make_known (
+					position,
+					stored_total,
+					revision,
+					a_is_final
+				)
 			else
-				create progress.make_unknown (position, revision, a_is_final)
+				create progress.make_unknown (
+					position,
+					revision,
+					a_is_final
+				)
 			end
 			formatted := formatter.item ([progress])
 			create line.make_from_string_general (formatted)
 			if a_is_final then
-				emit (terminal_renderer.finish_sequence (line, previous_line_count))
+				emit (terminal_renderer.finish_sequence (
+					line,
+					previous_line_count
+				))
 				last_line := line
 				previous_line_count := line.count
-			elseif not attached last_line as previous_line or else not line.same_string (previous_line) then
-				emit (terminal_renderer.redraw_sequence (line, previous_line_count))
+			elseif not attached last_line as previous_line or else
+				not line.same_string (previous_line) then
+				emit (terminal_renderer.redraw_sequence (
+					line,
+					previous_line_count
+				))
 				last_line := line
 				previous_line_count := line.count
 			end
@@ -207,10 +244,15 @@ feature {NONE} -- Implementation
 
 invariant
 
-	position_non_negative: position >= 0
-	revision_non_negative: revision >= 0
-	stored_total_non_negative: stored_total >= 0
-	line_count_non_negative: previous_line_count >= 0
-	last_line_count: attached last_line as line implies previous_line_count = line.count
+	position_non_negative: position >=
+		0
+	revision_non_negative: revision >=
+		0
+	stored_total_non_negative: stored_total >=
+		0
+	line_count_non_negative: previous_line_count >=
+		0
+	last_line_count: attached last_line as line implies
+		previous_line_count = line.count
 
 end

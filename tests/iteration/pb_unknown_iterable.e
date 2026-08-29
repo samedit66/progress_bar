@@ -1,10 +1,14 @@
 note
 
-	description: "Test iterable that deliberately does not conform to FINITE."
+	description:
+
+		"Test iterable that deliberately does not conform to FINITE."
+
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class PB_UNKNOWN_ITERABLE [G]
+class
+	PB_UNKNOWN_ITERABLE [G]
 
 inherit
 

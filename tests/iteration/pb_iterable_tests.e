@@ -1,10 +1,14 @@
 note
 
-	description: "Tests for progress-reporting iterable traversal."
+	description:
+
+		"Tests for progress-reporting iterable traversal."
+
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class PB_ITERABLE_TESTS
+class
+	PB_ITERABLE_TESTS
 
 inherit
 
@@ -28,17 +32,41 @@ feature -- Test
 			source.extend (4)
 			source.extend (5)
 			source.extend (6)
-			create iterable.make_with_formatter (source, agent capture)
+			create iterable.make_with_formatter (
+				source,
+				agent capture
+			)
 			create visited.make (3)
-			across iterable as value loop
+			across
+				iterable
+			as
+				value
+			loop
 				visited.extend (value)
 			end
-			assert_integers_equal ("all items", 3, visited.count)
-			assert_integers_equal ("first", 4, visited.i_th (1))
-			assert_integers_equal ("last", 6, visited.i_th (3))
-			assert_true ("known final", attached last_progress as progress and then
-				progress.has_total and then progress.total = 3 and then
-				progress.position = 3 and then progress.is_final)
+			assert_integers_equal (
+				"all items",
+				3,
+				visited.count
+			)
+			assert_integers_equal (
+				"first",
+				4,
+				visited.i_th (1)
+			)
+			assert_integers_equal (
+				"last",
+				6,
+				visited.i_th (3)
+			)
+			assert_true (
+				"known final",
+				attached last_progress as progress and then
+					progress.has_total and then
+					progress.total = 3 and then
+					progress.position = 3 and then
+					progress.is_final
+			)
 		end
 
 	test_unknown_traversal
@@ -54,13 +82,31 @@ feature -- Test
 			source.extend (7)
 			source.extend (8)
 			create unknown.make (source)
-			create iterable.make_with_formatter (unknown, agent capture)
-			across iterable as value loop
-				sum := sum + value
+			create iterable.make_with_formatter (
+				unknown,
+				agent capture
+			)
+			across
+				iterable
+			as
+				value
+			loop
+				sum :=
+					sum +
+						value
 			end
-			assert_integers_equal ("items retained", 15, sum)
-			assert_true ("unknown final", attached last_progress as progress and then
-				not progress.has_total and then progress.position = 2 and then progress.is_final)
+			assert_integers_equal (
+				"items retained",
+				15,
+				sum
+			)
+			assert_true (
+				"unknown final",
+				attached last_progress as progress and then
+					not progress.has_total and then
+					progress.position = 2 and then
+					progress.is_final
+			)
 		end
 
 	test_empty_traversal
@@ -72,14 +118,32 @@ feature -- Test
 		do
 			reset_capture
 			create source.make (0)
-			create iterable.make_with_formatter (source, agent capture)
-			across iterable as value loop
-				body_calls := body_calls + value
+			create iterable.make_with_formatter (
+				source,
+				agent capture
+			)
+			across
+				iterable
+			as
+				value
+			loop
+				body_calls :=
+					body_calls +
+						value
 			end
-			assert_integers_equal ("body not entered", 0, body_calls)
-			assert_true ("empty complete", attached last_progress as progress and then
-				progress.has_total and then progress.total = 0 and then
-				progress.is_complete and then progress.is_final)
+			assert_integers_equal (
+				"body not entered",
+				0,
+				body_calls
+			)
+			assert_true (
+				"empty complete",
+				attached last_progress as progress and then
+					progress.has_total and then
+					progress.total = 0 and then
+					progress.is_complete and then
+					progress.is_final
+			)
 		end
 
 	test_each_traversal_has_fresh_state
@@ -92,15 +156,38 @@ feature -- Test
 			reset_capture
 			create source.make (1)
 			source.extend (1)
-			create iterable.make_with_formatter (source, agent capture)
-			across iterable as value loop
-				ignored := ignored + value
+			create iterable.make_with_formatter (
+				source,
+				agent capture
+			)
+			across
+				iterable
+			as
+				value
+			loop
+				ignored :=
+					ignored +
+						value
 			end
-			across iterable as value loop
-				ignored := ignored + value
+			across
+				iterable
+			as
+				value
+			loop
+				ignored :=
+					ignored +
+						value
 			end
-			assert_integers_equal ("two final states", 2, final_count)
-			assert_integers_equal ("two initial states", 2, initial_count)
+			assert_integers_equal (
+				"two final states",
+				2,
+				final_count
+			)
+			assert_integers_equal (
+				"two initial states",
+				2,
+				initial_count
+			)
 		end
 
 feature {NONE} -- Capture
@@ -127,9 +214,13 @@ feature {NONE} -- Capture
 		do
 			last_progress := a_progress
 			if a_progress.is_final then
-				final_count := final_count + 1
+				final_count :=
+					final_count +
+						1
 			elseif a_progress.position = 0 then
-				initial_count := initial_count + 1
+				initial_count :=
+					initial_count +
+						1
 			end
 			create Result.make (16)
 			Result.append_integer_64 (a_progress.position)

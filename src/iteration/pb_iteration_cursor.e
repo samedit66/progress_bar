@@ -1,11 +1,14 @@
 note
 
 	description:
+
 		"Iteration cursor that advances a private progress bar after each visited item."
+
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class PB_ITERATION_CURSOR [G]
+class
+	PB_ITERATION_CURSOR [G]
 
 inherit
 
@@ -18,24 +21,21 @@ create {PB_ITERABLE}
 
 feature {NONE} -- Initialization
 
-	make_known (
-		a_source_cursor: ITERATION_CURSOR [G];
-		a_total: INTEGER_64;
-		a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
-	)
+	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Create a cursor with a known `a_total`.
 		require
-			total_non_negative: a_total >= 0
+			total_non_negative: a_total >=
+				0
 		do
 			source_cursor := a_source_cursor
-			create bar.make_with_formatter (a_total, a_formatter)
+			create bar.make_with_formatter (
+				a_total,
+				a_formatter
+			)
 			start
 		end
 
-	make_unknown (
-		a_source_cursor: ITERATION_CURSOR [G];
-		a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
-	)
+	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Create a cursor whose total is unknown.
 		do
 			source_cursor := a_source_cursor
@@ -52,7 +52,8 @@ feature {NONE} -- Initialization
 			end
 		ensure
 			zero_processed: processed = 0
-			empty_finished: source_cursor.after implies bar.is_finished
+			empty_finished: source_cursor.after implies
+				bar.is_finished
 		end
 
 feature -- Access
@@ -77,14 +78,18 @@ feature -- Cursor movement
 			-- Move to the next item and report the completed source item.
 		do
 			source_cursor.forth
-			processed := processed + 1
+			processed :=
+				processed +
+					1
 			bar.update (processed)
 			if source_cursor.after then
 				bar.finish
 			end
 		ensure then
-			processed_advanced: processed = old processed + 1
-			finished_at_end: after implies bar.is_finished
+			processed_advanced: processed = old processed +
+				1
+			finished_at_end: after implies
+				bar.is_finished
 		end
 
 feature {NONE} -- Implementation
@@ -100,7 +105,9 @@ feature {NONE} -- Implementation
 
 invariant
 
-	processed_non_negative: processed >= 0
-	finished_only_after: bar.is_finished implies source_cursor.after
+	processed_non_negative: processed >=
+		0
+	finished_only_after: bar.is_finished implies
+		source_cursor.after
 
 end
