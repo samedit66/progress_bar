@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOBO_TAG: gobo-26.06
+  EIFFELSTUDIO_VERSION: "25.12"
+  EIFFELSTUDIO_REVISION: "98922"
+
+jobs:
+  gobo:
+    name: Gobo / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Gobo
+        if: runner.os != 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/install-gobo.sh
+      - name: Install Gobo
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: .github/scripts/install-gobo.ps1
+      - name: Build and test
+        if: runner.os != 'Windows'
+        run: make test-gobo
+      - name: Build and test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & "$env:GOBO\bin\getest.exe" -g tests\getest.cfg
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:GOBO_EIFFEL = "ge"
+          & "$env:GOBO\bin\gec.exe" --variable=GOBO_EIFFEL=ge --ise=25.12 --gelint --target=pb_tests progress_bar.ecf
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\pb_tests.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  eiffelstudio:
+    name: EiffelStudio / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Gobo
+        if: runner.os != 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/install-gobo.sh
+      - name: Install Gobo
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: .github/scripts/install-gobo.ps1
+      - name: Install EiffelStudio on Ubuntu
+        if: runner.os == 'Linux'
+        run: bash .github/scripts/install-eiffelstudio.sh
+      - name: Install EiffelStudio on macOS
+        if: runner.os == 'macOS'
+        run: brew install eiffelstudio
+      - name: Install EiffelStudio on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .github/scripts/install-eiffelstudio.ps1
+      - name: Report EiffelStudio version
+        run: ec -version
+      - name: Compile and test
+        if: runner.os != 'Windows'
+        run: make test-ise
+      - name: Compile and test
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call .github\scripts\setup-msvc.cmd
+          if errorlevel 1 exit /b 1
+          set "GOBO_EIFFEL=ise"
+          "%GOBO%\bin\getest.exe" -g tests\getest.cfg
+          if errorlevel 1 exit /b 1
+          ec.exe -batch -config progress_bar.ecf -target pb_tests -c_compile
+          if errorlevel 1 exit /b 1
+          EIFGENs\pb_tests\W_code\pb_tests.exe
+          if errorlevel 1 exit /b 1
