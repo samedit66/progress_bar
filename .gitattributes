@@ -1,0 +1,5 @@
+*.e text eol=lf
+*.ecf text eol=lf
+*.md text eol=lf
+Makefile text eol=lf
+

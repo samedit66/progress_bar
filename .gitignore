@@ -1,0 +1,14 @@
+.DS_Store
+/.gobo/
+/EIFGENs/
+/build/
+/pb_tests
+/pb_tests.exe
+/progress_bar_quick_start
+/progress_bar_quick_start.exe
+*.epr
+*.o
+*.obj
+*.lib
+*.a
+
