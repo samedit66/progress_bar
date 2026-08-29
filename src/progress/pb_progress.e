@@ -7,7 +7,7 @@ note
 
 frozen class PB_PROGRESS
 
-create {NONE}
+create {PB_BAR}
 
 	make_known,
 	make_unknown
