@@ -21,26 +21,42 @@ create {PB_ITERABLE}
 
 feature {NONE} -- Initialization
 
-	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create a cursor with a known `a_total`.
+	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
+			-- Create a cursor with a known `a_total` in `a_display`.
 		require
 			total_non_negative: a_total >=
 				0
 		do
 			source_cursor := a_source_cursor
-			create bar.make_with_formatter (
+			create bar.make_in_with_formatter (
+				a_display,
 				a_total,
 				a_formatter
 			)
+			set_line_policy (a_keep_final_line)
 			start
 		end
 
-	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create a cursor whose total is unknown.
+	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
+			-- Create a cursor whose total is unknown in `a_display`.
 		do
 			source_cursor := a_source_cursor
-			create bar.make_unknown_with_formatter (a_formatter)
+			create bar.make_unknown_in_with_formatter (
+				a_display,
+				a_formatter
+			)
+			set_line_policy (a_keep_final_line)
 			start
+		end
+
+	set_line_policy (a_keep_final_line: BOOLEAN)
+			-- Apply `a_keep_final_line` before the first refresh.
+		do
+			if a_keep_final_line then
+				bar.keep_final_line
+			else
+				bar.discard_final_line
+			end
 		end
 
 	start

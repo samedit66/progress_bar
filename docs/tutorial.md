@@ -1,7 +1,7 @@
 # Tutorial
 
-This tutorial covers the two ways to drive `progress_bar`: explicitly through
-`PB_BAR`, or implicitly while traversing a `PB_ITERABLE [G]`.
+This tutorial covers explicit `PB_BAR` updates, nested progress, and implicit
+progress while traversing a `PB_ITERABLE [G]`.
 
 ## Add the library
 
@@ -92,6 +92,89 @@ The wrapper retains the source rather than copying it. Every `new_cursor` call,
 including every new `across`, creates an independent progress bar and observes
 the source's count at that time.
 
+## Write messages without overwriting progress
+
+Use `put_line` instead of writing directly to the terminal while a progress
+line is active:
+
+```eiffel
+across progress as source_file loop
+    compile (source_file)
+    progress.put_line ("Compiled " + source_file.name)
+end
+```
+
+The same command is available on a manually driven bar:
+
+```eiffel
+bar.update (completed)
+bar.put_line ("Retrying failed operation")
+```
+
+The command clears the managed progress block, writes the supplied text followed
+by one newline, and restores every cached line. It does not advance `position`
+or `revision`, change the lifecycle, or invoke any formatter. Before the first
+update and after all bars finish, it writes an ordinary line to standard error.
+
+`PB_RANGE` inherits `put_line` from `PB_ITERABLE [INTEGER]`. All bars and cursors
+created in one `PB_DISPLAY` are restored in stable order.
+
+## Nest progress bars
+
+Start the parent before creating its child. The child automatically reuses the
+parent's display and occupies the next row below the parent's descendants:
+
+```eiffel
+local
+    files, chunks: PB_BAR
+do
+    create files.make (file_count)
+    files.update (0)
+    from file_index := 1 until file_index > file_count loop
+        create chunks.make_child (files, chunks_in (file_index))
+        chunks.discard_final_line
+        from chunk_index := 1 until chunk_index > chunks_in (file_index) loop
+            process_chunk (file_index, chunk_index)
+            chunks.update (chunk_index)
+            chunk_index := chunk_index + 1
+        end
+        chunks.finish
+        files.update (file_index)
+        file_index := file_index + 1
+    end
+    files.finish
+end
+```
+
+Children may have their own children. A parent cannot finish while any of its
+descendants is still open; `has_open_children` exposes that state. Child
+progress does not advance or aggregate into its parent automatically.
+
+Final rows are kept by default. Call `discard_final_line` before the first
+update to remove a completed row, or `keep_final_line` to state the default
+explicitly. The policy cannot change after a `PB_BAR` starts.
+
+## Coordinate unrelated progress
+
+Use one explicit display when bars are not in a parent-child relationship but
+must share the same terminal block:
+
+```eiffel
+local
+    display: PB_DISPLAY
+    downloads, indexing: PB_BAR
+do
+    create display.make
+    create downloads.make_in (display, download_count)
+    create indexing.make_unknown_in (display)
+end
+```
+
+The same pattern works with `PB_ITERABLE.make_in`,
+`PB_ITERABLE.make_in_with_formatter`, and the `PB_RANGE` constructors ending
+in `_in`. Every traversal cursor receives its own stable display line. Changing
+an iterable's final-line policy affects only cursors created afterwards.
+
 ## Traverse an integer range
 
 `PB_RANGE` specializes `PB_ITERABLE [INTEGER]` for an inclusive integer
@@ -163,9 +246,9 @@ the formatter.
 ## Finish reliably
 
 Call `finish` once the operation is done, including from rescue or cleanup code
-when appropriate for the application. It writes the last formatted state and a
-newline. `finish` is idempotent, so cleanup code may call it even when the
-normal path has already done so.
+when appropriate for the application. It closes the bar's row using its final
+line policy. `finish` is idempotent, so cleanup code may call it even when the
+normal path has already done so. Finish descendants before their parent.
 
 After `finish`, `update` and `pulse` violate their `not_finished` precondition.
 Construct a new bar for a new operation.

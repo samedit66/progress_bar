@@ -19,7 +19,7 @@ feature {NONE} -- Initialization
 	make
 			-- Run the quick-start examples.
 		local
-			bar: PB_BAR
+			bar, child: PB_BAR
 			formatters: PB_FORMATTERS
 			items: ARRAYED_LIST [STRING]
 			progress: PB_ITERABLE [STRING]
@@ -61,6 +61,42 @@ feature {NONE} -- Initialization
 						1
 			end
 			bar.finish
+			create bar.make_with_formatter (
+				2,
+				formatters.standard (
+					"Files",
+					"files",
+					"complete"
+				)
+			)
+			bar.update (0)
+			from
+				i := 1
+			until
+				i >
+					2
+			loop
+				create child.make_child_with_formatter (
+					bar,
+					3,
+					formatters.standard (
+						"Chunks",
+						"chunks",
+						"complete"
+					)
+				)
+				child.discard_final_line
+				child.update (0)
+				child.update (1)
+				child.update (2)
+				child.update (3)
+				child.finish
+				bar.update (i)
+				i :=
+					i +
+						1
+			end
+			bar.finish
 			create items.make (3)
 			items.extend ("parse")
 			items.extend ("analyze")
@@ -79,6 +115,8 @@ feature {NONE} -- Initialization
 				item
 			loop
 				process (item)
+				progress.put_line ("Processed " +
+					item)
 			end
 			create range.make_from_to_with_formatter (
 				1,

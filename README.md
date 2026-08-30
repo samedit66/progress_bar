@@ -13,8 +13,9 @@
 </div>
 
 `progress_bar` is a void-safe, ELKS-only Eiffel library for terminal progress.
-It supports direct updates, unknown totals with a spinner, and transparent
-`across` traversal. Presentation is an agent, so applications can define
+It supports direct updates, nested and independently coordinated bars, unknown
+totals with a spinner, and transparent `across` traversal. Presentation is an
+agent, so applications can define
 labels, units, counters, rates, or any domain-specific suffix without coupling
 the progress state to those concerns.
 
@@ -81,6 +82,46 @@ do
 end
 ```
 
+Write a message without overwriting the active progress line:
+
+```eiffel
+across progress as item loop
+    process (item)
+    progress.put_line ("Processed " + item.name)
+end
+```
+
+`put_line` is also available on `PB_BAR` and is inherited by `PB_RANGE`. It
+writes synchronously to the same standard error stream as the progress display,
+then restores every managed line without invoking any formatter again.
+
+Create nested work directly from its parent bar:
+
+```eiffel
+local
+    parent, child: PB_BAR
+do
+    create parent.make (files.count)
+    parent.update (0)
+    across files as source_file loop
+        create child.make_child (parent, source_file.part_count)
+        child.discard_final_line
+        across source_file.parts as part loop
+            process (part)
+            child.update (child.position + 1)
+        end
+        child.finish
+        parent.update (parent.position + 1)
+    end
+    parent.finish
+end
+```
+
+A child shares its parent's `PB_DISPLAY`, occupies a stable row below the
+parent, and may itself own children. Finish descendants before their parent.
+Use an explicit `PB_DISPLAY` when unrelated bars or iterable traversals should
+share the same managed block.
+
 If `items` also conforms to `FINITE [MY_ITEM]`, each traversal uses its
 `count`. Otherwise the cursor uses unknown-total progress. Every call to
 `new_cursor` owns an independent bar.
@@ -126,20 +167,25 @@ stateful formatter agents. A complete program is in
 
 | Class | Purpose |
 | --- | --- |
+| [`PB_DISPLAY`](src/internal/pb_display.e) | Coordinate ordered top-level and nested progress lines |
 | [`PB_BAR`](src/bar/pb_bar.e) | Manually update known or unknown progress |
 | [`PB_ITERABLE [G]`](src/iteration/pb_iterable.e) | Add progress to an existing iterable |
 | [`PB_RANGE`](src/iteration/pb_range.e) | Traverse an inclusive integer range with progress |
 | [`PB_PROGRESS`](src/progress/pb_progress.e) | Immutable snapshot passed to a formatter |
 | [`PB_FORMATTERS`](src/formatter/pb_formatters.e) | Built-in and configured formatter agents |
 
-`PB_ITERATION_CURSOR [G]` and `PB_TERMINAL_RENDERER` are implementation
-classes. Individual feature signatures and contracts in the Eiffel classes are
-the source of truth.
+`PB_DISPLAY_LINE`, `PB_ITERATION_CURSOR [G]`, and `PB_TERMINAL_RENDERER` are
+implementation classes. Individual feature signatures and contracts in the
+Eiffel classes are the source of truth.
 
 ## Design boundaries
 
 - Progress is synchronous: updates redraw the line; no worker or background
   animation is created.
+- A `PB_DISPLAY` coordinates its bars synchronously. It is intended to be used
+  from one thread; independently created displays do not coordinate output.
+- Multiline rendering uses ECMA-48 cursor movement and erase-line sequences.
+- A formatter result is one physical line. `put_line` accepts multiline text.
 - `PB_BAR` knows positions and totals, not bytes, downloads, tasks, or time.
 - Formatters return text and own presentation policy. Stateful formatter
   objects can add application-specific measurements.

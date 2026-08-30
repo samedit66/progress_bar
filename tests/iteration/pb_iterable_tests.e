@@ -168,6 +168,7 @@ feature -- Test
 				ignored :=
 					ignored +
 						value
+				iterable.put_line ("first traversal")
 			end
 			across
 				iterable
@@ -177,6 +178,7 @@ feature -- Test
 				ignored :=
 					ignored +
 						value
+				iterable.put_line ("second traversal")
 			end
 			assert_integers_equal (
 				"two final states",
@@ -187,6 +189,82 @@ feature -- Test
 				"two initial states",
 				2,
 				initial_count
+			)
+		end
+
+	test_interleaved_traversals_share_display
+			-- Keep independent traversal lines stable while cursors advance out of order.
+		local
+			display: PB_TEST_DISPLAY
+			first_source, second_source: ARRAYED_LIST [INTEGER]
+			first_iterable, second_iterable: PB_ITERABLE [INTEGER]
+			first_cursor, second_cursor: ITERATION_CURSOR [INTEGER]
+		do
+			create display.make
+			create first_source.make (1)
+			first_source.extend (1)
+			create second_source.make (1)
+			second_source.extend (2)
+			create first_iterable.make_in_with_formatter (
+				display,
+				first_source,
+				agent first_text
+			)
+			create second_iterable.make_in_with_formatter (
+				display,
+				second_source,
+				agent second_text
+			)
+			first_cursor := first_iterable.new_cursor
+			second_cursor := second_iterable.new_cursor
+			display.reset
+			first_cursor.forth
+			assert_true (
+				"first final retained",
+				display.captured.has_substring ("first 1")
+			)
+			assert_true (
+				"second still visible",
+				display.captured.has_substring ("second 0")
+			)
+			second_cursor.forth
+			assert_true (
+				"both exhausted",
+				first_cursor.after and then
+					second_cursor.after
+			)
+		end
+
+	test_line_policy_is_copied_to_new_cursor
+			-- Changing iterable policy affects only cursors created afterwards.
+		local
+			display: PB_TEST_DISPLAY
+			source: ARRAYED_LIST [INTEGER]
+			iterable: PB_ITERABLE [INTEGER]
+			kept_cursor, discarded_cursor: ITERATION_CURSOR [INTEGER]
+		do
+			create display.make
+			create source.make (1)
+			source.extend (1)
+			create iterable.make_in_with_formatter (
+				display,
+				source,
+				agent first_text
+			)
+			kept_cursor := iterable.new_cursor
+			iterable.discard_final_line
+			display.reset
+			kept_cursor.forth
+			assert_true (
+				"existing cursor keeps policy",
+				display.captured.ends_with ("%N")
+			)
+			discarded_cursor := iterable.new_cursor
+			display.reset
+			discarded_cursor.forth
+			assert_false (
+				"future cursor discards line",
+				display.captured.ends_with ("%N")
 			)
 		end
 
@@ -223,6 +301,22 @@ feature {NONE} -- Capture
 						1
 			end
 			create Result.make (16)
+			Result.append_integer_64 (a_progress.position)
+		end
+
+	first_text (a_progress: PB_PROGRESS): STRING_32
+			-- First traversal label.
+		do
+			create Result.make (16)
+			Result.append_string_general ("first ")
+			Result.append_integer_64 (a_progress.position)
+		end
+
+	second_text (a_progress: PB_PROGRESS): STRING_32
+			-- Second traversal label.
+		do
+			create Result.make (16)
+			Result.append_string_general ("second ")
 			Result.append_integer_64 (a_progress.position)
 		end
 

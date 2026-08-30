@@ -264,6 +264,60 @@ feature -- Test
 			)
 		end
 
+	test_put_line_during_range
+			-- Write a message while preserving inherited range traversal.
+		local
+			range: PB_RANGE
+			sum: INTEGER
+		do
+			reset_capture
+			create range.make_from_to_with_formatter (
+				1,
+				2,
+				agent capture
+			)
+			across
+				range
+			as
+				value
+			loop
+				sum :=
+					sum +
+						value
+				range.put_line ("range item")
+			end
+			assert_integers_equal (
+				"range sum",
+				3,
+				sum
+			)
+			assert_true (
+				"range final progress",
+				attached last_progress as progress and then
+					progress.position = 2 and then
+					progress.is_final
+			)
+		end
+
+	test_range_uses_supplied_display
+			-- Coordinate range progress with other lines through a supplied display.
+		local
+			display: PB_TEST_DISPLAY
+			range: PB_RANGE
+		do
+			create display.make
+			create range.make_from_to_in_with_formatter (
+				1,
+				2,
+				display,
+				agent capture
+			)
+			assert_true (
+				"display retained",
+				range.display = display
+			)
+		end
+
 feature {NONE} -- Capture
 
 	last_progress: detachable PB_PROGRESS

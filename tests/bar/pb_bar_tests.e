@@ -136,6 +136,59 @@ feature -- Test
 			)
 		end
 
+	test_put_line_preserves_progress
+			-- Write messages throughout the lifecycle without changing progress.
+		local
+			bar: PB_BAR
+		do
+			reset_capture
+			create bar.make_unknown_with_formatter (agent capture)
+			bar.put_line ("before")
+			assert_false (
+				"not started by message",
+				bar.is_started
+			)
+			assert_integers_equal (
+				"no callback before start",
+				0,
+				callback_count
+			)
+			bar.update (3)
+			bar.put_line ("during")
+			assert_true (
+				"position preserved",
+				bar.position = 3
+			)
+			assert_true (
+				"revision preserved",
+				bar.revision = 1
+			)
+			assert_integers_equal (
+				"no callback during message",
+				1,
+				callback_count
+			)
+			bar.finish
+			bar.put_line ("after")
+			assert_true (
+				"remains finished",
+				bar.is_finished
+			)
+			assert_true (
+				"final position preserved",
+				bar.position = 3
+			)
+			assert_true (
+				"final revision preserved",
+				bar.revision = 1
+			)
+			assert_integers_equal (
+				"no callback after finish",
+				2,
+				callback_count
+			)
+		end
+
 feature {NONE} -- Capture
 
 	last_progress: detachable PB_PROGRESS
