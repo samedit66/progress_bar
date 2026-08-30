@@ -121,17 +121,17 @@ created in one `PB_DISPLAY` are restored in stable order.
 
 ## Nest progress bars
 
-Start the parent before creating its child. The child automatically reuses the
-parent's display and occupies the next row below the parent's descendants:
+Create a child directly from its parent. The first child starts a lazy parent
+automatically, reuses its display, and occupies the next row below the parent's
+descendants:
 
 ```eiffel
 local
     files, chunks: PB_BAR
 do
     create files.make (file_count)
-    files.update (0)
     from file_index := 1 until file_index > file_count loop
-        create chunks.make_child (files, chunks_in (file_index))
+        chunks := files.new_child (chunks_in (file_index))
         chunks.discard_final_line
         from chunk_index := 1 until chunk_index > chunks_in (file_index) loop
             process_chunk (file_index, chunk_index)

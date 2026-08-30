@@ -19,11 +19,11 @@ create
 	make_in,
 	make_in_with_formatter,
 	make_unknown_in,
-	make_unknown_in_with_formatter,
-	make_child,
-	make_child_with_formatter,
-	make_unknown_child,
-	make_unknown_child_with_formatter
+	make_unknown_in_with_formatter
+
+create {PB_BAR}
+
+	make_child
 
 feature {NONE} -- Initialization
 
@@ -182,63 +182,6 @@ feature {NONE} -- Initialization
 			total_set: total = a_total
 		end
 
-	make_child_with_formatter (a_parent: PB_BAR; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted progress with known `a_total` nested below `a_parent`.
-		require
-			parent_started: a_parent.is_started
-			parent_not_finished: not a_parent.is_finished
-			total_non_negative: a_total >=
-				0
-		do
-			initialize_child (
-				a_parent,
-				True,
-				a_total,
-				a_formatter
-			)
-		ensure
-			display_shared: display = a_parent.display
-			total_known: has_total
-			total_set: total = a_total
-		end
-
-	make_unknown_child (a_parent: PB_BAR)
-			-- Create progress with unknown total nested below `a_parent`.
-		require
-			parent_started: a_parent.is_started
-			parent_not_finished: not a_parent.is_finished
-		local
-			formatters: PB_FORMATTERS
-		do
-			create formatters
-			initialize_child (
-				a_parent,
-				False,
-				0,
-				formatters.basic
-			)
-		ensure
-			display_shared: display = a_parent.display
-			total_unknown: not has_total
-		end
-
-	make_unknown_child_with_formatter (a_parent: PB_BAR; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted progress with unknown total nested below `a_parent`.
-		require
-			parent_started: a_parent.is_started
-			parent_not_finished: not a_parent.is_finished
-		do
-			initialize_child (
-				a_parent,
-				False,
-				0,
-				a_formatter
-			)
-		ensure
-			display_shared: display = a_parent.display
-			total_unknown: not has_total
-		end
-
 	initialize_private (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Initialize Current with a private display.
 		require
@@ -307,6 +250,38 @@ feature -- Access
 
 	revision: INTEGER_64
 			-- Number of accepted update and pulse requests.
+
+feature -- Nesting
+
+	new_child (a_total: INTEGER_64): PB_BAR
+			-- New progress with known `a_total` nested below Current.
+			-- Render Current at its existing position first when necessary.
+		require
+			not_finished: not is_finished
+			total_non_negative: a_total >=
+				0
+		do
+			if not is_started then
+				update (position)
+			end
+			create Result.make_child (
+				Current,
+				a_total
+			)
+		ensure
+			parent_started: is_started
+			parent_position_unchanged: position = old position
+			started_parent_revision_unchanged: old is_started implies
+				revision = old revision
+			lazy_parent_revision_advanced: not old is_started implies
+				revision = old revision +
+					1
+			display_shared: Result.display = display
+			total_set: Result.total = a_total
+			child_not_started: not Result.is_started
+			child_open: not Result.is_finished
+			open_child_registered: has_open_children
+		end
 
 feature -- Status report
 

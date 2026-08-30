@@ -69,24 +69,14 @@ feature {NONE} -- Initialization
 					"complete"
 				)
 			)
-			bar.update (0)
 			from
 				i := 1
 			until
 				i >
 					2
 			loop
-				create child.make_child_with_formatter (
-					bar,
-					3,
-					formatters.standard (
-						"Chunks",
-						"chunks",
-						"complete"
-					)
-				)
+				child := bar.new_child (3)
 				child.discard_final_line
-				child.update (0)
 				child.update (1)
 				child.update (2)
 				child.update (3)

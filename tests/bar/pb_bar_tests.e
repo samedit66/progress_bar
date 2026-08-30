@@ -189,6 +189,75 @@ feature -- Test
 			)
 		end
 
+	test_new_child_starts_lazy_parent_once
+			-- Start a lazy parent once when creating its first child.
+		local
+			parent, first_child, second_child: PB_BAR
+		do
+			reset_capture
+			create parent.make_with_formatter (
+				2,
+				agent capture
+			)
+			first_child := parent.new_child (3)
+			assert_true (
+				"parent started",
+				parent.is_started
+			)
+			assert_true (
+				"parent position preserved",
+				parent.position = 0
+			)
+			assert_true (
+				"parent revision advanced",
+				parent.revision = 1
+			)
+			assert_integers_equal (
+				"parent rendered once",
+				1,
+				callback_count
+			)
+			assert_true (
+				"child shares display",
+				first_child.display = parent.display
+			)
+			assert_true (
+				"child total",
+				first_child.total = 3
+			)
+			assert_false (
+				"child remains configurable",
+				first_child.is_started
+			)
+			first_child.discard_final_line
+			second_child := parent.new_child (4)
+			assert_true (
+				"parent revision unchanged",
+				parent.revision = 1
+			)
+			assert_integers_equal (
+				"parent not rendered again",
+				1,
+				callback_count
+			)
+			first_child.finish
+			second_child.finish
+			parent.finish
+		end
+
+	test_finished_parent_rejects_new_child
+			-- Reject child creation after the parent has finished.
+		local
+			parent: PB_BAR
+		do
+			create parent.make (1)
+			parent.finish
+			assert_exception (
+				"finished parent",
+				agent create_child (parent)
+			)
+		end
+
 feature {NONE} -- Capture
 
 	last_progress: detachable PB_PROGRESS
@@ -223,6 +292,14 @@ feature {NONE} -- Capture
 				callback_count +
 					1
 			Result := "same"
+		end
+
+	create_child (a_parent: PB_BAR)
+			-- Attempt to create a child of `a_parent`.
+		local
+			child: PB_BAR
+		do
+			child := a_parent.new_child (1)
 		end
 
 end

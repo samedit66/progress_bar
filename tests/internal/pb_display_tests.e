@@ -61,12 +61,7 @@ feature -- Test
 				2,
 				agent position_text
 			)
-			parent.update (0)
-			create child.make_child_with_formatter (
-				parent,
-				1,
-				agent child_text
-			)
+			child := parent.new_child (1)
 			child.update (0)
 			assert_true (
 				"shared display",
@@ -78,7 +73,8 @@ feature -- Test
 			)
 			assert_true (
 				"both lines repainted",
-				display.captured.has_substring ("parent 0%N%Rchild 0")
+				display.captured.has_substring ("parent 0%N%R[") and then
+					display.captured.has_substring ("0 / 1")
 			)
 			display.reset
 			parent.update (1)
@@ -88,7 +84,7 @@ feature -- Test
 			)
 			assert_false (
 				"child not reformatted",
-				display.captured.has_substring ("child")
+				display.captured.has_substring ("0 / 1")
 			)
 			child.finish
 			assert_false (
@@ -110,12 +106,7 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			parent.update (0)
-			create child.make_child_with_formatter (
-				parent,
-				1,
-				agent child_text
-			)
+			child := parent.new_child (1)
 			child.update (0)
 			display.reset
 			parent.put_line ("first%Nsecond")
@@ -129,7 +120,7 @@ feature -- Test
 			)
 			assert_true (
 				"child restored",
-				display.captured.has_substring ("child 0")
+				display.captured.has_substring ("0 / 1")
 			)
 			child.finish
 			parent.finish
@@ -147,12 +138,7 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			parent.update (0)
-			create child.make_child_with_formatter (
-				parent,
-				1,
-				agent child_text
-			)
+			child := parent.new_child (1)
 			child.discard_final_line
 			child.update (1)
 			display.reset
@@ -167,7 +153,7 @@ feature -- Test
 			)
 			assert_false (
 				"child removed",
-				display.captured.has_substring ("child 1")
+				display.captured.has_substring ("1 / 1")
 			)
 			parent.finish
 		end
@@ -177,6 +163,7 @@ feature -- Test
 		local
 			display: PB_TEST_DISPLAY
 			parent, child, grandchild: PB_BAR
+			parent_index, child_index, grandchild_index: INTEGER
 		do
 			create display.make
 			create parent.make_in_with_formatter (
@@ -184,23 +171,33 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			parent.update (0)
-			create child.make_child_with_formatter (
-				parent,
-				1,
-				agent child_text
-			)
+			child := parent.new_child (2)
 			child.update (0)
-			create grandchild.make_child_with_formatter (
-				child,
-				1,
-				agent grandchild_text
-			)
+			grandchild := child.new_child (3)
 			display.reset
 			grandchild.update (0)
+			parent_index := display.captured.substring_index (
+				"parent 0",
+				1
+			)
+			child_index := display.captured.substring_index (
+				"0 / 2",
+				parent_index +
+					1
+			)
+			grandchild_index := display.captured.substring_index (
+				"0 / 3",
+				child_index +
+					1
+			)
 			assert_true (
 				"depth-first order",
-				display.captured.has_substring ("parent 0%N%Rchild 0%N%Rgrandchild 0")
+				parent_index >
+					0 and then
+					child_index >
+						parent_index and then
+					grandchild_index >
+						child_index
 			)
 			assert_true (
 				"parent sees deep descendant",
@@ -218,22 +215,6 @@ feature {NONE} -- Formatting
 		do
 			create Result.make (16)
 			Result.append_string_general ("parent ")
-			Result.append_integer_64 (a_progress.position)
-		end
-
-	child_text (a_progress: PB_PROGRESS): STRING_32
-			-- Child line showing position.
-		do
-			create Result.make (16)
-			Result.append_string_general ("child ")
-			Result.append_integer_64 (a_progress.position)
-		end
-
-	grandchild_text (a_progress: PB_PROGRESS): STRING_32
-			-- Grandchild line showing position.
-		do
-			create Result.make (20)
-			Result.append_string_general ("grandchild ")
 			Result.append_integer_64 (a_progress.position)
 		end
 
