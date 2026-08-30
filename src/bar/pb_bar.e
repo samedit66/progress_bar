@@ -19,10 +19,7 @@ create
 	make_in,
 	make_in_with_formatter,
 	make_unknown_in,
-	make_unknown_in_with_formatter
-
-create {PB_BAR}
-
+	make_unknown_in_with_formatter,
 	make_child
 
 feature {NONE} -- Initialization
@@ -161,14 +158,17 @@ feature {NONE} -- Initialization
 
 	make_child (a_parent: PB_BAR; a_total: INTEGER_64)
 			-- Create progress with known `a_total` nested below `a_parent`.
+			-- Render `a_parent` at its existing position first when necessary.
 		require
-			parent_started: a_parent.is_started
 			parent_not_finished: not a_parent.is_finished
 			total_non_negative: a_total >=
 				0
 		local
 			formatters: PB_FORMATTERS
 		do
+			if not a_parent.is_started then
+				a_parent.update (a_parent.position)
+			end
 			create formatters
 			initialize_child (
 				a_parent,
@@ -177,9 +177,19 @@ feature {NONE} -- Initialization
 				formatters.basic
 			)
 		ensure
+			parent_started: a_parent.is_started
+			parent_position_unchanged: a_parent.position = old a_parent.position
+			started_parent_revision_unchanged: old a_parent.is_started implies
+				a_parent.revision = old a_parent.revision
+			lazy_parent_revision_advanced: not old a_parent.is_started implies
+				a_parent.revision = old a_parent.revision +
+					1
 			display_shared: display = a_parent.display
 			total_known: has_total
 			total_set: total = a_total
+			child_not_started: not is_started
+			child_open: not is_finished
+			open_child_registered: a_parent.has_open_children
 		end
 
 	initialize_private (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
@@ -250,38 +260,6 @@ feature -- Access
 
 	revision: INTEGER_64
 			-- Number of accepted update and pulse requests.
-
-feature -- Nesting
-
-	new_child (a_total: INTEGER_64): PB_BAR
-			-- New progress with known `a_total` nested below Current.
-			-- Render Current at its existing position first when necessary.
-		require
-			not_finished: not is_finished
-			total_non_negative: a_total >=
-				0
-		do
-			if not is_started then
-				update (position)
-			end
-			create Result.make_child (
-				Current,
-				a_total
-			)
-		ensure
-			parent_started: is_started
-			parent_position_unchanged: position = old position
-			started_parent_revision_unchanged: old is_started implies
-				revision = old revision
-			lazy_parent_revision_advanced: not old is_started implies
-				revision = old revision +
-					1
-			display_shared: Result.display = display
-			total_set: Result.total = a_total
-			child_not_started: not Result.is_started
-			child_open: not Result.is_finished
-			open_child_registered: has_open_children
-		end
 
 feature -- Status report
 

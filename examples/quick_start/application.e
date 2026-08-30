@@ -75,7 +75,10 @@ feature {NONE} -- Initialization
 				i >
 					2
 			loop
-				child := bar.new_child (3)
+				create child.make_child (
+					bar,
+					3
+				)
 				child.discard_final_line
 				child.update (1)
 				child.update (2)

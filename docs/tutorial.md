@@ -131,7 +131,7 @@ local
 do
     create files.make (file_count)
     from file_index := 1 until file_index > file_count loop
-        chunks := files.new_child (chunks_in (file_index))
+        create chunks.make_child (files, chunks_in (file_index))
         chunks.discard_final_line
         from chunk_index := 1 until chunk_index > chunks_in (file_index) loop
             process_chunk (file_index, chunk_index)

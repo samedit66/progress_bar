@@ -70,7 +70,7 @@ local
 do
     create parent.make (files.count)
     across files as source_file loop
-        child := parent.new_child (source_file.part_count)
+        create child.make_child (parent, source_file.part_count)
         child.discard_final_line
         across source_file.parts as part loop
             process (part)
@@ -83,7 +83,7 @@ do
 end
 ```
 
-`new_child` starts a lazy parent automatically. The child shares its parent's
+`make_child` starts a lazy parent automatically. The child shares its parent's
 display and occupies a stable row below it; descendants must finish before their
 parent. Use an explicit `PB_DISPLAY` to coordinate unrelated bars or iterable
 traversals.

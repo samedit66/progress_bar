@@ -12,7 +12,8 @@ Creation procedures:
 - `make_in (display, total)` and `make_in_with_formatter (display, total,
   formatter)` create known top-level progress in an existing display;
 - `make_unknown_in (display)` and `make_unknown_in_with_formatter (display,
-  formatter)` create unknown top-level progress in an existing display.
+  formatter)` create unknown top-level progress in an existing display;
+- `make_child (parent, total)` creates known progress nested below `parent`.
 
 Known totals and positions must be non-negative. `update (position)` replaces
 the absolute position, marks the bar started, advances `revision`, and invokes
@@ -25,10 +26,11 @@ change frame.
 
 `display` identifies the `PB_DISPLAY` coordinating the bar. A child shares its
 parent's display and has a stable position after the parent and its existing
-descendants. `new_child (total)` returns a lazy child with a known total and the
-default formatter. If the parent is still lazy, creating its first child renders
-the parent at its existing position and advances its revision once. Later child
-creation does not refresh the parent. Child updates do not modify parent state.
+descendants. `make_child (parent, total)` creates a lazy child with a known total
+and the default formatter. If the parent is still lazy, creating its first child
+renders the parent at its existing position and advances its revision once.
+Later child creation does not refresh the parent. Child updates do not modify
+parent state.
 `has_open_children` includes every unfinished descendant. A parent may finish
 only after this query becomes false.
 
@@ -55,8 +57,8 @@ caller and may leave partially written terminal output.
 
 `make` creates an idle terminal display. Passing it to constructors ending in
 `_in` coordinates unrelated bars and iterable cursors in one ordered terminal
-block. `PB_BAR.new_child` derives the display from its parent, so callers do not
-pass both values.
+block. `PB_BAR.make_child` derives the display from its parent, so callers do
+not pass both values.
 
 `put_line (message)` is equivalent to calling `put_line` on any associated bar
 or iterable. A display performs synchronous writes to standard error and is a

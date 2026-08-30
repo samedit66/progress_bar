@@ -61,7 +61,10 @@ feature -- Test
 				2,
 				agent position_text
 			)
-			child := parent.new_child (1)
+			create child.make_child (
+				parent,
+				1
+			)
 			child.update (0)
 			assert_true (
 				"shared display",
@@ -106,7 +109,10 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			child := parent.new_child (1)
+			create child.make_child (
+				parent,
+				1
+			)
 			child.update (0)
 			display.reset
 			parent.put_line ("first%Nsecond")
@@ -138,7 +144,10 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			child := parent.new_child (1)
+			create child.make_child (
+				parent,
+				1
+			)
 			child.discard_final_line
 			child.update (1)
 			display.reset
@@ -171,9 +180,15 @@ feature -- Test
 				1,
 				agent position_text
 			)
-			child := parent.new_child (2)
+			create child.make_child (
+				parent,
+				2
+			)
 			child.update (0)
-			grandchild := child.new_child (3)
+			create grandchild.make_child (
+				child,
+				3
+			)
 			display.reset
 			grandchild.update (0)
 			parent_index := display.captured.substring_index (

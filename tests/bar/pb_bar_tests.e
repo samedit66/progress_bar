@@ -189,7 +189,7 @@ feature -- Test
 			)
 		end
 
-	test_new_child_starts_lazy_parent_once
+	test_make_child_starts_lazy_parent_once
 			-- Start a lazy parent once when creating its first child.
 		local
 			parent, first_child, second_child: PB_BAR
@@ -199,7 +199,10 @@ feature -- Test
 				2,
 				agent capture
 			)
-			first_child := parent.new_child (3)
+			create first_child.make_child (
+				parent,
+				3
+			)
 			assert_true (
 				"parent started",
 				parent.is_started
@@ -230,7 +233,10 @@ feature -- Test
 				first_child.is_started
 			)
 			first_child.discard_final_line
-			second_child := parent.new_child (4)
+			create second_child.make_child (
+				parent,
+				4
+			)
 			assert_true (
 				"parent revision unchanged",
 				parent.revision = 1
@@ -245,7 +251,7 @@ feature -- Test
 			parent.finish
 		end
 
-	test_finished_parent_rejects_new_child
+	test_finished_parent_rejects_make_child
 			-- Reject child creation after the parent has finished.
 		local
 			parent: PB_BAR
@@ -299,7 +305,10 @@ feature {NONE} -- Capture
 		local
 			child: PB_BAR
 		do
-			child := a_parent.new_child (1)
+			create child.make_child (
+				a_parent,
+				1
+			)
 		end
 
 end
