@@ -132,6 +132,27 @@ feature -- Test
 			parent.finish
 		end
 
+	test_unchanged_line_does_not_emit
+			-- Avoid terminal output when a refreshed line has unchanged text.
+		local
+			display: PB_TEST_DISPLAY
+			bar: PB_BAR
+		do
+			create display.make
+			create bar.make_unknown_in_with_formatter (
+				display,
+				agent constant_text
+			)
+			bar.update (1)
+			display.reset
+			bar.update (2)
+			assert_true (
+				"no duplicate output",
+				display.captured.is_empty
+			)
+			bar.finish
+		end
+
 	test_discarded_child_is_removed
 			-- Remove a child's final row while leaving its parent active.
 		local
@@ -231,6 +252,12 @@ feature {NONE} -- Formatting
 			create Result.make (16)
 			Result.append_string_general ("parent ")
 			Result.append_integer_64 (a_progress.position)
+		end
+
+	constant_text (a_progress: PB_PROGRESS): STRING_32
+			-- Stable line independent of `a_progress`.
+		do
+			Result := "same"
 		end
 
 end

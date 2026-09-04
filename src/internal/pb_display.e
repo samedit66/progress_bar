@@ -33,7 +33,7 @@ feature -- Output
 			visible_lines := current_lines
 			emit (renderer.message_frame_sequence (
 				a_message,
-				visible_line_count,
+				visible_lines.count,
 				visible_lines
 			))
 		ensure
@@ -101,14 +101,19 @@ feature {PB_BAR} -- Line lifecycle
 			was_visible: BOOLEAN
 			previous_count: INTEGER
 			rows_below: INTEGER
+			text_changed: BOOLEAN
 		do
-			old_visible_count := visible_line_count
 			was_visible := a_line.is_visible
 			if attached a_line.text as old_text then
 				previous_count := old_text.count
+				text_changed := not old_text.same_string (a_text)
+			else
+				text_changed := True
 			end
-			if not attached a_line.text as old_text or else
-				not old_text.same_string (a_text) then
+			if text_changed then
+				if not was_visible then
+					old_visible_count := visible_line_count
+				end
 				a_line.set_text (a_text)
 				if was_visible then
 					rows_below := visible_rows_below (a_line)
@@ -232,7 +237,7 @@ feature {NONE} -- Rendering
 	current_lines: ARRAYED_LIST [STRING_32]
 			-- Visible line texts in display order.
 		do
-			create Result.make (visible_line_count)
+			create Result.make (lines.count)
 			across
 				lines
 			as
@@ -312,10 +317,5 @@ feature {NONE} -- Implementation
 
 	renderer: PB_TERMINAL_RENDERER
 			-- Terminal control-sequence builder.
-
-invariant
-
-	visible_count_non_negative: visible_line_count >=
-		0
 
 end
