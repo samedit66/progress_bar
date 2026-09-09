@@ -23,10 +23,10 @@ feature {NONE} -- Initialization
 	make (a_source: ITERABLE [G])
 			-- Decorate `a_source` with the default formatter and a private display.
 		local
-			formatters: PB_FORMATTERS
+			private_display: PB_DISPLAY
 		do
-			create formatters
-			initialize_private (a_source, formatters.basic)
+			create private_display.make
+			make_in (private_display, a_source)
 		end
 
 	make_in (a_display: PB_DISPLAY; a_source: ITERABLE [G])
@@ -34,28 +34,13 @@ feature {NONE} -- Initialization
 		local
 			formatters: PB_FORMATTERS
 		do
-			create formatters
-			initialize_in (a_display, a_source, formatters.basic)
-		ensure
-			display_set: display = a_display
-		end
-
-	initialize_private (a_source: ITERABLE [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Retain source and formatter with a private display.
-		local
-			private_display: PB_DISPLAY
-		do
-			create private_display.make
-			initialize_in (private_display, a_source, a_formatter)
-		end
-
-	initialize_in (a_display: PB_DISPLAY; a_source: ITERABLE [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Retain source, formatter, and display for fresh cursors.
-		do
 			display := a_display
 			source := a_source
-			formatter := a_formatter
+			create formatters
+			formatter := formatters.basic
 			keeps_final_line := True
+		ensure
+			display_set: display = a_display
 		end
 
 feature -- Access

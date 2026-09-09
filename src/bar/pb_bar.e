@@ -24,10 +24,10 @@ feature {NONE} -- Initialization
 		require
 			total_non_negative: a_total >= 0
 		local
-			formatters: PB_FORMATTERS
+			private_display: PB_DISPLAY
 		do
-			create formatters
-			initialize_private (True, a_total, formatters.basic)
+			create private_display.make
+			initialize_in (private_display, True, a_total)
 		ensure
 			total_known: has_total
 			total_set: total = a_total
@@ -36,10 +36,10 @@ feature {NONE} -- Initialization
 	make_unknown
 			-- Create top-level progress with unknown total and a private display.
 		local
-			formatters: PB_FORMATTERS
+			private_display: PB_DISPLAY
 		do
-			create formatters
-			initialize_private (False, 0, formatters.basic)
+			create private_display.make
+			initialize_in (private_display, False, 0)
 		ensure
 			total_unknown: not has_total
 		end
@@ -48,11 +48,8 @@ feature {NONE} -- Initialization
 			-- Create top-level progress with known `a_total` in `a_display`.
 		require
 			total_non_negative: a_total >= 0
-		local
-			formatters: PB_FORMATTERS
 		do
-			create formatters
-			initialize_in (a_display, True, a_total, formatters.basic)
+			initialize_in (a_display, True, a_total)
 		ensure
 			display_set: display = a_display
 			total_known: has_total
@@ -61,11 +58,8 @@ feature {NONE} -- Initialization
 
 	make_unknown_in (a_display: PB_DISPLAY)
 			-- Create top-level progress with unknown total in `a_display`.
-		local
-			formatters: PB_FORMATTERS
 		do
-			create formatters
-			initialize_in (a_display, False, 0, formatters.basic)
+			initialize_in (a_display, False, 0)
 		ensure
 			display_set: display = a_display
 			total_unknown: not has_total
@@ -78,13 +72,17 @@ feature {NONE} -- Initialization
 			parent_not_finished: not a_parent.is_finished
 			total_non_negative: a_total >= 0
 		local
-			formatters: PB_FORMATTERS
+			line: PB_DISPLAY_LINE
 		do
 			if a_total > 0 and then not a_parent.is_started then
 				a_parent.update (a_parent.position)
 			end
-			create formatters
-			initialize_child (a_parent, True, a_total, formatters.basic)
+			if a_total = 0 then
+				line := a_parent.display.new_closed_line
+			else
+				line := a_parent.display.new_child_line (a_parent.display_line)
+			end
+			initialize (a_parent.display, True, a_total, line)
 		ensure
 			parent_started: a_total > 0 implies a_parent.is_started
 			parent_position_unchanged: a_parent.position = old a_parent.position
@@ -98,53 +96,34 @@ feature {NONE} -- Initialization
 			open_child_registered: a_total > 0 implies a_parent.has_open_children
 		end
 
-	initialize_private (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Initialize Current with a private display.
+	initialize_in (a_display: PB_DISPLAY; a_has_total: BOOLEAN; a_total: INTEGER_64)
+			-- Select a top-level line and initialize Current in `a_display`.
 		require
 			total_non_negative: a_total >= 0
 		local
-			private_display: PB_DISPLAY
+			line: PB_DISPLAY_LINE
 		do
-			create private_display.make
-			initialize_in (private_display, a_has_total, a_total, a_formatter)
+			if a_has_total and a_total = 0 then
+				line := a_display.new_closed_line
+			else
+				line := a_display.new_line
+			end
+			initialize (a_display, a_has_total, a_total, line)
 		end
 
-	initialize_in (a_display: PB_DISPLAY; a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Initialize top-level Current in `a_display`.
+	initialize (a_display: PB_DISPLAY; a_has_total: BOOLEAN; a_total: INTEGER_64; a_line: PB_DISPLAY_LINE)
+			-- Establish state and default formatting before publishing Current to its line.
 		require
 			total_non_negative: a_total >= 0
+		local
+			formatters: PB_FORMATTERS
 		do
-			has_total := a_has_total
-			stored_total := a_total
-			formatter := a_formatter
 			display := a_display
-			if a_has_total and a_total = 0 then
-				display_line := a_display.new_closed_line
-			else
-				display_line := a_display.new_line
-			end
-			keeps_final_line := True
-			if not is_finished then
-				display_line.set_bar (Current)
-			end
-		end
-
-	initialize_child (a_parent: PB_BAR; a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Initialize Current immediately below `a_parent` and its descendants.
-		require
-			parent_started: a_total > 0 implies a_parent.is_started
-			parent_not_finished: not a_parent.is_finished
-			total_non_negative: a_total >= 0
-		do
+			display_line := a_line
 			has_total := a_has_total
 			stored_total := a_total
-			formatter := a_formatter
-			display := a_parent.display
-			if a_has_total and a_total = 0 then
-				display_line := display.new_closed_line
-			else
-				display_line := display.new_child_line (a_parent.display_line)
-			end
+			create formatters
+			formatter := formatters.basic
 			keeps_final_line := True
 			if not is_finished then
 				display_line.set_bar (Current)
