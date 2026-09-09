@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_FORMATTERS
+class PB_FORMATTERS
 
 feature -- Standard formatters
 
@@ -54,13 +53,7 @@ feature -- Configured formatters
 			create label_copy.make_from_string_general (a_label)
 			create unit_copy.make_from_string_general (a_unit)
 			create post_label_copy.make_from_string_general (a_post_label)
-			Result := agent format_standard (
-				?,
-				label_copy,
-				unit_copy,
-				post_label_copy,
-				False
-			)
+			Result := agent format_standard (?, label_copy, unit_copy, post_label_copy, False)
 		end
 
 feature {NONE} -- Formatting
@@ -68,25 +61,13 @@ feature {NONE} -- Formatting
 	format_default (a_progress: PB_PROGRESS): STRING_32
 			-- Format `a_progress` using portable ASCII characters.
 		do
-			Result := format_standard (
-				a_progress,
-				"",
-				"",
-				"",
-				False
-			)
+			Result := format_standard (a_progress, "", "", "", False)
 		end
 
 	format_unicode (a_progress: PB_PROGRESS): STRING_32
 			-- Format `a_progress` using Unicode characters.
 		do
-			Result := format_standard (
-				a_progress,
-				"",
-				"",
-				"",
-				True
-			)
+			Result := format_standard (a_progress, "", "", "", True)
 		end
 
 	format_compact (a_progress: PB_PROGRESS): STRING_32
@@ -94,21 +75,11 @@ feature {NONE} -- Formatting
 		do
 			create Result.make (32)
 			if a_progress.has_total then
-				append_percentage (
-					Result,
-					a_progress
-				)
+				append_percentage (Result, a_progress)
 				Result.append_string_general ("  ")
-				append_counter (
-					Result,
-					a_progress
-				)
+				append_counter (Result, a_progress)
 			else
-				append_spinner (
-					Result,
-					a_progress,
-					False
-				)
+				append_spinner (Result, a_progress, False)
 				Result.append_integer_64 (a_progress.position)
 			end
 		end
@@ -117,10 +88,7 @@ feature {NONE} -- Formatting
 			-- Format `a_progress` as a numeric counter.
 		do
 			create Result.make (24)
-			append_counter (
-				Result,
-				a_progress
-			)
+			append_counter (Result, a_progress)
 		end
 
 	format_minimal (a_progress: PB_PROGRESS): STRING_32
@@ -128,10 +96,7 @@ feature {NONE} -- Formatting
 		do
 			create Result.make (8)
 			if a_progress.has_total then
-				append_percentage (
-					Result,
-					a_progress
-				)
+				append_percentage (Result, a_progress)
 			elseif a_progress.is_final then
 				Result.append_integer_64 (a_progress.position)
 			else
@@ -148,27 +113,13 @@ feature {NONE} -- Formatting
 				Result.append_string_general ("  ")
 			end
 			if a_progress.has_total then
-				append_bar (
-					Result,
-					a_progress,
-					a_use_unicode
-				)
+				append_bar (Result, a_progress, a_use_unicode)
 				Result.append_string_general ("  ")
-				append_percentage (
-					Result,
-					a_progress
-				)
+				append_percentage (Result, a_progress)
 				Result.append_string_general ("  ")
-				append_counter (
-					Result,
-					a_progress
-				)
+				append_counter (Result, a_progress)
 			else
-				append_spinner (
-					Result,
-					a_progress,
-					a_use_unicode
-				)
+				append_spinner (Result, a_progress, a_use_unicode)
 				Result.append_integer_64 (a_progress.position)
 			end
 			if not a_unit.is_empty then
@@ -189,34 +140,15 @@ feature {NONE} -- Formatting
 			filled_count: INTEGER
 			empty_count: INTEGER
 		do
-			filled_count := (a_progress.fraction *
-				Default_bar_width).truncated_to_integer
-			empty_count :=
-				Default_bar_width -
-					filled_count
+			filled_count := (a_progress.fraction * Default_bar_width).truncated_to_integer
+			empty_count := Default_bar_width - filled_count
 			a_result.append_character ('[')
 			if a_use_unicode then
-				append_repeated_code (
-					a_result,
-					0x2588,
-					filled_count
-				)
-				append_repeated_code (
-					a_result,
-					0x2591,
-					empty_count
-				)
+				append_repeated_code (a_result, 0x2588, filled_count)
+				append_repeated_code (a_result, 0x2591, empty_count)
 			else
-				append_repeated_code (
-					a_result,
-					('#').natural_32_code,
-					filled_count
-				)
-				append_repeated_code (
-					a_result,
-					('-').natural_32_code,
-					empty_count
-				)
+				append_repeated_code (a_result, ('#').natural_32_code, filled_count)
+				append_repeated_code (a_result, ('-').natural_32_code, empty_count)
 			end
 			a_result.append_character (']')
 		end
@@ -256,8 +188,7 @@ feature {NONE} -- Formatting
 	ascii_spinner (a_revision: INTEGER_64): CHARACTER_32
 			-- ASCII spinner frame selected by `a_revision`.
 		do
-			inspect (a_revision \\
-				4).as_integer_32
+			inspect (a_revision \\ 4).as_integer_32
 			when 0 then
 				Result := '|'
 			when 1 then
@@ -272,8 +203,7 @@ feature {NONE} -- Formatting
 	unicode_spinner (a_revision: INTEGER_64): CHARACTER_32
 			-- Braille spinner frame selected by `a_revision`.
 		do
-			inspect (a_revision \\
-				10).as_integer_32
+			inspect (a_revision \\ 10).as_integer_32
 			when 0 then
 				Result := (0x280B).to_character_32
 			when 1 then
@@ -300,21 +230,17 @@ feature {NONE} -- Formatting
 	append_repeated_code (a_result: STRING_32; a_code: NATURAL_32; a_count: INTEGER)
 			-- Append `a_code` to `a_result` exactly `a_count` times.
 		require
-			count_non_negative: a_count >=
-				0
+			count_non_negative: a_count >= 0
 		local
 			i: INTEGER
 		do
 			from
 				i := 1
 			until
-				i >
-					a_count
+				i > a_count
 			loop
 				a_result.append_code (a_code)
-				i :=
-					i +
-						1
+				i := i + 1
 			end
 		end
 

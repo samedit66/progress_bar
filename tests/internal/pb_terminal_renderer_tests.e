@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_TERMINAL_RENDERER_TESTS
+class PB_TERMINAL_RENDERER_TESTS
 
 inherit
 
@@ -27,14 +26,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.redraw_sequence (
-				"long",
-				2
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ("%Rlong")
-			)
+			sequence := renderer.redraw_sequence ("long", 2)
+			assert_true ("sequence", sequence.same_string ("%Rlong"))
 		end
 
 	test_redraw_shorter_line
@@ -44,14 +37,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.redraw_sequence (
-				"new",
-				5
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ("%Rnew  %Rnew")
-			)
+			sequence := renderer.redraw_sequence ("new", 5)
+			assert_true ("sequence", sequence.same_string ("%Rnew  %Rnew"))
 		end
 
 	test_finish_line
@@ -61,14 +48,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.finish_sequence (
-				"ok",
-				4
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ("%Rok  %N")
-			)
+			sequence := renderer.finish_sequence ("ok", 4)
+			assert_true ("sequence", sequence.same_string ("%Rok  %N"))
 		end
 
 	test_message_above_active_line
@@ -78,15 +59,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.message_sequence (
-				"done",
-				"work",
-				4
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ("%R    %Rdone%N%Rwork")
-			)
+			sequence := renderer.message_sequence ("done", "work", 4)
+			assert_true ("sequence", sequence.same_string ("%R    %Rdone%N%Rwork"))
 		end
 
 	test_empty_message_above_empty_line
@@ -96,15 +70,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.message_sequence (
-				"",
-				"",
-				0
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ("%R%R%N%R")
-			)
+			sequence := renderer.message_sequence ("", "", 0)
+			assert_true ("sequence", sequence.same_string ("%R%R%N%R"))
 		end
 
 	test_unicode_multiline_message
@@ -114,15 +81,8 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.message_sequence (
-				{STRING_32} "first%NВторая%N",
-				{STRING_32} "Работа",
-				6
-			)
-			assert_true (
-				"sequence",
-				sequence.same_string ({STRING_32} "%R      %Rfirst%NВторая%N%N%RРабота")
-			)
+			sequence := renderer.message_sequence ({STRING_32} "first%NВторая%N", {STRING_32} "Работа", 6)
+			assert_true ("sequence", sequence.same_string ({STRING_32} "%R      %Rfirst%NВторая%N%N%RРабота"))
 		end
 
 	test_redraw_parent_line
@@ -132,23 +92,10 @@ feature -- Test
 			sequence: STRING_32
 		do
 			create renderer
-			sequence := renderer.redraw_line_sequence (
-				"parent",
-				3,
-				1
-			)
-			assert_true (
-				"move up",
-				sequence.has_substring ({STRING_32} "%/27/[1A")
-			)
-			assert_true (
-				"erase row",
-				sequence.has_substring ({STRING_32} "%/27/[2K%Rparent")
-			)
-			assert_true (
-				"move down",
-				sequence.has_substring ({STRING_32} "%/27/[1B")
-			)
+			sequence := renderer.redraw_line_sequence ("parent", 3, 1)
+			assert_true ("move up", sequence.has_substring ({STRING_32} "%/27/[1A"))
+			assert_true ("erase row", sequence.has_substring ({STRING_32} "%/27/[2K%Rparent"))
+			assert_true ("move down", sequence.has_substring ({STRING_32} "%/27/[1B"))
 		end
 
 	test_replace_multiline_frame
@@ -162,18 +109,9 @@ feature -- Test
 			create lines.make (2)
 			lines.extend ("parent")
 			lines.extend ("child")
-			sequence := renderer.frame_sequence (
-				1,
-				lines
-			)
-			assert_true (
-				"old row erased",
-				sequence.starts_with ({STRING_32} "%R%/27/[2K")
-			)
-			assert_true (
-				"ordered rows",
-				sequence.ends_with ("parent%N%Rchild")
-			)
+			sequence := renderer.frame_sequence (1, lines)
+			assert_true ("old row erased", sequence.starts_with ({STRING_32} "%R%/27/[2K"))
+			assert_true ("ordered rows", sequence.ends_with ("parent%N%Rchild"))
 		end
 
 end

@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_BAR
+class PB_BAR
 
 create
 
@@ -23,17 +22,12 @@ feature {NONE} -- Initialization
 	make (a_total: INTEGER_64)
 			-- Create top-level progress with known `a_total` and a private display.
 		require
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		local
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_private (
-				True,
-				a_total,
-				formatters.basic
-			)
+			initialize_private (True, a_total, formatters.basic)
 		ensure
 			total_known: has_total
 			total_set: total = a_total
@@ -45,11 +39,7 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_private (
-				False,
-				0,
-				formatters.basic
-			)
+			initialize_private (False, 0, formatters.basic)
 		ensure
 			total_unknown: not has_total
 		end
@@ -57,18 +47,12 @@ feature {NONE} -- Initialization
 	make_in (a_display: PB_DISPLAY; a_total: INTEGER_64)
 			-- Create top-level progress with known `a_total` in `a_display`.
 		require
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		local
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_in (
-				a_display,
-				True,
-				a_total,
-				formatters.basic
-			)
+			initialize_in (a_display, True, a_total, formatters.basic)
 		ensure
 			display_set: display = a_display
 			total_known: has_total
@@ -81,12 +65,7 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_in (
-				a_display,
-				False,
-				0,
-				formatters.basic
-			)
+			initialize_in (a_display, False, 0, formatters.basic)
 		ensure
 			display_set: display = a_display
 			total_unknown: not has_total
@@ -122,18 +101,12 @@ feature {NONE} -- Initialization
 	initialize_private (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Initialize Current with a private display.
 		require
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		local
 			private_display: PB_DISPLAY
 		do
 			create private_display.make
-			initialize_in (
-				private_display,
-				a_has_total,
-				a_total,
-				a_formatter
-			)
+			initialize_in (private_display, a_has_total, a_total, a_formatter)
 		end
 
 	initialize_in (a_display: PB_DISPLAY; a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
@@ -193,8 +166,7 @@ feature -- Access
 		do
 			Result := stored_total
 		ensure
-			non_negative: Result >=
-				0
+			non_negative: Result >= 0
 		end
 
 	revision: INTEGER_64
@@ -377,32 +349,16 @@ feature {NONE} -- Rendering
 			line: STRING_32
 		do
 			if has_total then
-				create progress.make_known (
-					position,
-					stored_total,
-					revision,
-					a_is_final
-				)
+				create progress.make_known (position, stored_total, revision, a_is_final)
 			else
-				create progress.make_unknown (
-					position,
-					revision,
-					a_is_final
-				)
+				create progress.make_unknown (position, revision, a_is_final)
 			end
 			formatted := formatter.item ([progress])
 			create line.make_from_string_general (formatted)
 			if a_is_final then
-				display.finish (
-					display_line,
-					line,
-					keeps_final_line
-				)
+				display.finish (display_line, line, keeps_final_line)
 			else
-				display.redraw (
-					display_line,
-					line
-				)
+				display.redraw (display_line, line)
 			end
 		end
 
@@ -417,11 +373,8 @@ feature {NONE} -- Implementation
 invariant
 
 	known_position_bounded: has_total implies position <= stored_total
-	position_non_negative: position >=
-		0
-	revision_non_negative: revision >=
-		0
-	stored_total_non_negative: stored_total >=
-		0
+	position_non_negative: position >= 0
+	revision_non_negative: revision >= 0
+	stored_total_non_negative: stored_total >= 0
 
 end

@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_DISPLAY
+class PB_DISPLAY
 
 create
 
@@ -31,11 +30,7 @@ feature -- Output
 			visible_lines: ARRAYED_LIST [STRING_32]
 		do
 			visible_lines := current_lines
-			emit (renderer.message_frame_sequence (
-				a_message,
-				visible_lines.count,
-				visible_lines
-			))
+			emit (renderer.message_frame_sequence (a_message, visible_lines.count, visible_lines))
 		ensure
 			line_count_unchanged: lines.count = old lines.count
 		end
@@ -96,23 +91,13 @@ feature {PB_BAR} -- Line lifecycle
 		do
 			create Result.make (a_parent)
 			from
-				index :=
-					lines.index_of (
-						a_parent,
-						1
-					) +
-						1
+				index := lines.index_of (a_parent, 1) + 1
 			until
-				index >
-					lines.count or else
-					not lines.i_th (index).is_descendant_of (a_parent)
+				index > lines.count or else not lines.i_th (index).is_descendant_of (a_parent)
 			loop
-				index :=
-					index +
-						1
+				index := index + 1
 			end
-			if index >
-				lines.count then
+			if index > lines.count then
 				lines.extend (Result)
 			else
 				lines.go_i_th (index)
@@ -151,21 +136,13 @@ feature {PB_BAR} -- Line lifecycle
 				a_line.set_text (a_text)
 				if was_visible then
 					rows_below := visible_rows_below (a_line)
-					emit (renderer.redraw_line_sequence (
-						a_text,
-						previous_count,
-						rows_below
-					))
+					emit (renderer.redraw_line_sequence (a_text, previous_count, rows_below))
 				else
-					emit (renderer.frame_sequence (
-						old_visible_count,
-						current_lines
-					))
+					emit (renderer.frame_sequence (old_visible_count, current_lines))
 				end
 			end
 		ensure
-			text_set: attached a_line.text as stored_text and then
-				stored_text.same_string (a_text)
+			text_set: attached a_line.text as stored_text and then stored_text.same_string (a_text)
 		end
 
 	finish (a_line: PB_DISPLAY_LINE; a_text: STRING_32; a_keep_final_line: BOOLEAN)
@@ -184,29 +161,15 @@ feature {PB_BAR} -- Line lifecycle
 			if attached a_line.text as old_text then
 				previous_count := old_text.count
 			end
-			a_line.close (
-				a_text,
-				a_keep_final_line
-			)
+			a_line.close (a_text, a_keep_final_line)
 			visible_lines := current_lines
 			if has_open_lines then
-				emit (renderer.frame_sequence (
-					old_visible_count,
-					visible_lines
-				))
+				emit (renderer.frame_sequence (old_visible_count, visible_lines))
 			else
-				if visible_lines.count = 1 and then
-					old_visible_count <=
-						1 then
-					emit (renderer.finish_sequence (
-						visible_lines.first,
-						previous_count
-					))
+				if visible_lines.count = 1 and then old_visible_count <= 1 then
+					emit (renderer.finish_sequence (visible_lines.first, previous_count))
 				else
-					emit (renderer.commit_frame_sequence (
-						old_visible_count,
-						visible_lines
-					))
+					emit (renderer.commit_frame_sequence (old_visible_count, visible_lines))
 				end
 				lines.wipe_out
 			end
@@ -230,9 +193,7 @@ feature {PB_BAR} -- Line lifecycle
 				Result
 			loop
 				candidate := line_cursor
-				Result :=
-					not candidate.is_closed and then
-						candidate.is_descendant_of (a_line)
+				Result := not candidate.is_closed and then candidate.is_descendant_of (a_line)
 			end
 		end
 
@@ -252,17 +213,11 @@ feature {PB_BAR} -- Line lifecycle
 			from
 				index := 1
 			until
-				not Result or else
-					index >
-						a_text.count
+				not Result or else index > a_text.count
 			loop
 				character := a_text.item (index)
-				Result :=
-					character /= '%N' and then
-						character /= '%R'
-				index :=
-					index +
-						1
+				Result := character /= '%N' and then character /= '%R'
+				index := index + 1
 			end
 		end
 
@@ -277,8 +232,7 @@ feature {NONE} -- Rendering
 			as
 				line_cursor
 			loop
-				if attached line_cursor.text as line_text and then
-					line_cursor.is_visible then
+				if attached line_cursor.text as line_text and then line_cursor.is_visible then
 					Result.extend (line_text)
 				end
 			end
@@ -293,9 +247,7 @@ feature {NONE} -- Rendering
 				line_cursor
 			loop
 				if line_cursor.is_visible then
-					Result :=
-						Result +
-							1
+					Result := Result + 1
 				end
 			end
 		end
@@ -312,11 +264,8 @@ feature {NONE} -- Rendering
 			as
 				line_cursor
 			loop
-				if found and then
-					line_cursor.is_visible then
-					Result :=
-						Result +
-							1
+				if found and then line_cursor.is_visible then
+					Result := Result + 1
 				elseif line_cursor = a_line then
 					found := True
 				end

@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_RANGE_TESTS
+class PB_RANGE_TESTS
 
 inherit
 
@@ -219,13 +218,9 @@ feature {NONE} -- Capture
 		do
 			last_progress := a_progress
 			if a_progress.is_final then
-				final_count :=
-					final_count +
-						1
+				final_count := final_count + 1
 			elseif a_progress.position = 0 then
-				initial_count :=
-					initial_count +
-						1
+				initial_count := initial_count + 1
 			end
 			create Result.make (16)
 			Result.append_integer_64 (a_progress.position)

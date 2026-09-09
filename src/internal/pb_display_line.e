@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_DISPLAY_LINE
+class PB_DISPLAY_LINE
 
 create {PB_DISPLAY}
 
@@ -53,10 +52,7 @@ feature {PB_DISPLAY, PB_BAR} -- Status report
 	is_visible: BOOLEAN
 			-- Does Current occupy a terminal row?
 		do
-			Result :=
-				attached text and then
-					(not is_closed or else
-						keeps_final_line)
+			Result := attached text and then (not is_closed or else keeps_final_line)
 		end
 
 	keeps_final_line: BOOLEAN
@@ -70,8 +66,7 @@ feature {PB_DISPLAY, PB_BAR} -- Status report
 			from
 				candidate := parent
 			until
-				Result or else
-					not attached candidate as attached_candidate
+				Result or else not attached candidate as attached_candidate
 			loop
 				if attached_candidate = a_line then
 					Result := True
@@ -90,8 +85,7 @@ feature {PB_DISPLAY} -- Element change
 		do
 			text := a_text.twin
 		ensure
-			text_set: attached text as stored_text and then
-				stored_text.same_string (a_text)
+			text_set: attached text as stored_text and then stored_text.same_string (a_text)
 		end
 
 	close (a_text: STRING_32; a_keep_final_line: BOOLEAN)

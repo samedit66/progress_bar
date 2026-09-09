@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_TEST_DISPLAY
+class PB_TEST_DISPLAY
 
 inherit
 

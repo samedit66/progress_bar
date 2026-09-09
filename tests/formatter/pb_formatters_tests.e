@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_FORMATTERS_TESTS
+class PB_FORMATTERS_TESTS
 
 inherit
 

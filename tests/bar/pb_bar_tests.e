@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_BAR_TESTS
+class PB_BAR_TESTS
 
 inherit
 
@@ -356,10 +355,7 @@ feature {NONE} -- Capture
 		local
 			child: PB_BAR
 		do
-			create child.make_child (
-				a_parent,
-				1
-			)
+			create child.make_child (a_parent, 1)
 		end
 
 end

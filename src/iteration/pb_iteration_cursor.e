@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_ITERATION_CURSOR [G]
+class PB_ITERATION_CURSOR [G]
 
 inherit
 
@@ -110,9 +109,7 @@ feature {NONE} -- Implementation
 
 invariant
 
-	processed_non_negative: processed >=
-		0
-	finished_only_after: bar.is_finished implies
-		source_cursor.after
+	processed_non_negative: processed >= 0
+	finished_only_after: bar.is_finished implies source_cursor.after
 
 end

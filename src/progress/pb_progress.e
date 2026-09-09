@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-frozen class
-	PB_PROGRESS
+frozen class PB_PROGRESS
 
 create {PB_BAR}
 
@@ -20,12 +19,9 @@ feature {NONE} -- Initialization
 	make_known (a_current, a_total, a_revision: INTEGER_64; a_is_final: BOOLEAN)
 			-- Create a snapshot with known `a_total`.
 		require
-			current_non_negative: a_current >=
-				0
-			total_non_negative: a_total >=
-				0
-			revision_non_negative: a_revision >=
-				0
+			current_non_negative: a_current >= 0
+			total_non_negative: a_total >= 0
+			revision_non_negative: a_revision >= 0
 		do
 			position := a_current
 			stored_total := a_total
@@ -43,10 +39,8 @@ feature {NONE} -- Initialization
 	make_unknown (a_current, a_revision: INTEGER_64; a_is_final: BOOLEAN)
 			-- Create a snapshot whose total is unknown.
 		require
-			current_non_negative: a_current >=
-				0
-			revision_non_negative: a_revision >=
-				0
+			current_non_negative: a_current >= 0
+			revision_non_negative: a_revision >= 0
 		do
 			position := a_current
 			revision := a_revision
@@ -70,8 +64,7 @@ feature -- Access
 		do
 			Result := stored_total
 		ensure
-			non_negative: Result >=
-				0
+			non_negative: Result >= 0
 		end
 
 	revision: INTEGER_64
@@ -82,22 +75,15 @@ feature -- Access
 		require
 			total_known: has_total
 		do
-			if stored_total = 0 or else
-				position >=
-					stored_total then
+			if stored_total = 0 or else position >= stored_total then
 				Result := 1.0
 			else
-				Result :=
-					position.to_double /
-						stored_total.to_double
+				Result := position.to_double / stored_total.to_double
 			end
 		ensure
-			not_negative: Result >=
-				0.0
-			not_greater_than_one: Result <=
-				1.0
-			empty_is_complete: stored_total = 0 implies
-				Result = 1.0
+			not_negative: Result >= 0.0
+			not_greater_than_one: Result <= 1.0
+			empty_is_complete: stored_total = 0 implies Result = 1.0
 		end
 
 	percentage: INTEGER
@@ -105,13 +91,10 @@ feature -- Access
 		require
 			total_known: has_total
 		do
-			Result := (fraction *
-				100.0).truncated_to_integer
+			Result := (fraction * 100.0).truncated_to_integer
 		ensure
-			not_negative: Result >=
-				0
-			not_greater_than_one_hundred: Result <=
-				100
+			not_negative: Result >= 0
+			not_greater_than_one_hundred: Result <= 100
 		end
 
 feature -- Status report
@@ -122,14 +105,9 @@ feature -- Status report
 	is_complete: BOOLEAN
 			-- Has Current reached or exceeded its known total?
 		do
-			Result :=
-				has_total and then
-					position >=
-						stored_total
+			Result := has_total and then position >= stored_total
 		ensure
-			definition: Result = (has_total and then
-				position >=
-					stored_total)
+			definition: Result = (has_total and then position >= stored_total)
 		end
 
 	is_final: BOOLEAN
@@ -142,11 +120,8 @@ feature {NONE} -- Implementation
 
 invariant
 
-	position_non_negative: position >=
-		0
-	revision_non_negative: revision >=
-		0
-	stored_total_non_negative: stored_total >=
-		0
+	position_non_negative: position >= 0
+	revision_non_negative: revision >= 0
+	stored_total_non_negative: stored_total >= 0
 
 end

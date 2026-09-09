@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_RANGE
+class PB_RANGE
 
 inherit
 
@@ -24,17 +23,11 @@ feature {NONE} -- Initialization
 	make_from_to (a_from, a_to: INTEGER)
 			-- Create progress over all integers from `a_from` through `a_to`, inclusive.
 		require
-			count_representable: is_count_representable (
-				a_from,
-				a_to
-			)
+			count_representable: is_count_representable (a_from, a_to)
 		local
 			interval: INTEGER_INTERVAL
 		do
-			create interval.make (
-				a_from,
-				a_to
-			)
+			create interval.make (a_from, a_to)
 			make (interval)
 		end
 
@@ -56,17 +49,9 @@ feature {NONE} -- Contract support
 	is_count_representable (a_from, a_to: INTEGER): BOOLEAN
 			-- Does the inclusive range cardinality fit in `INTEGER`?
 		do
-			Result :=
-				a_from >
-					a_to or else
-					a_to.to_integer_64 -
-						a_from.to_integer_64 +
-						1 <=
-						{INTEGER}.max_value.to_integer_64
+			Result := a_from > a_to or else a_to.to_integer_64 - a_from.to_integer_64 + 1 <= {INTEGER}.max_value.to_integer_64
 		ensure
-			empty_representable: a_from >
-				a_to implies
-				Result
+			empty_representable: a_from > a_to implies Result
 		end
 
 end

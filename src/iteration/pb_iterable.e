@@ -7,8 +7,7 @@ note
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
 
-class
-	PB_ITERABLE [G]
+class PB_ITERABLE [G]
 
 inherit
 
@@ -27,10 +26,7 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_private (
-				a_source,
-				formatters.basic
-			)
+			initialize_private (a_source, formatters.basic)
 		end
 
 	make_in (a_display: PB_DISPLAY; a_source: ITERABLE [G])
@@ -39,11 +35,7 @@ feature {NONE} -- Initialization
 			formatters: PB_FORMATTERS
 		do
 			create formatters
-			initialize_in (
-				a_display,
-				a_source,
-				formatters.basic
-			)
+			initialize_in (a_display, a_source, formatters.basic)
 		ensure
 			display_set: display = a_display
 		end
@@ -54,11 +46,7 @@ feature {NONE} -- Initialization
 			private_display: PB_DISPLAY
 		do
 			create private_display.make
-			initialize_in (
-				private_display,
-				a_source,
-				a_formatter
-			)
+			initialize_in (private_display, a_source, a_formatter)
 		end
 
 	initialize_in (a_display: PB_DISPLAY; a_source: ITERABLE [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
@@ -81,20 +69,9 @@ feature -- Access
 			cursor: PB_ITERATION_CURSOR [G]
 		do
 			if attached {FINITE [G]} source as finite then
-				create cursor.make_known (
-					source.new_cursor,
-					finite.count.to_integer_64,
-					formatter,
-					display,
-					keeps_final_line
-				)
+				create cursor.make_known (source.new_cursor, finite.count.to_integer_64, formatter, display, keeps_final_line)
 			else
-				create cursor.make_unknown (
-					source.new_cursor,
-					formatter,
-					display,
-					keeps_final_line
-				)
+				create cursor.make_unknown (source.new_cursor, formatter, display, keeps_final_line)
 			end
 			Result := cursor
 		end
