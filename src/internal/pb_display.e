@@ -48,21 +48,19 @@ feature {PB_BAR} -- Line lifecycle
 		end
 
 	finish_descendants (a_line: PB_DISPLAY_LINE)
-			-- Finish deepest open descendants first, using the existing line order.
+			-- Finish the contiguous subtree in reverse display order.
 		require
 			registered: is_registered (a_line)
 			open: not a_line.is_closed
 		local
 			index: INTEGER
-			candidate: PB_DISPLAY_LINE
 		do
 			from
-				index := lines.count
+				index := subtree_end_index (a_line) - 1
 			until
-				index = 0
+				lines.i_th (index) = a_line
 			loop
-				candidate := lines.i_th (index)
-				if candidate.is_descendant_of (a_line) and then attached candidate.bar as child then
+				if attached lines.i_th (index).bar as child then
 					child.finish
 				end
 				index := index - 1
@@ -90,13 +88,7 @@ feature {PB_BAR} -- Line lifecycle
 			index: INTEGER
 		do
 			create Result.make (a_parent)
-			from
-				index := lines.index_of (a_parent, 1) + 1
-			until
-				index > lines.count or else not lines.i_th (index).is_descendant_of (a_parent)
-			loop
-				index := index + 1
-			end
+			index := subtree_end_index (a_parent)
 			if index > lines.count then
 				lines.extend (Result)
 			else
@@ -219,6 +211,25 @@ feature {PB_BAR} -- Line lifecycle
 				Result := character /= '%N' and then character /= '%R'
 				index := index + 1
 			end
+		end
+
+feature {NONE} -- Hierarchy
+
+	subtree_end_index (a_line: PB_DISPLAY_LINE): INTEGER
+			-- Index immediately after `a_line` and its contiguous descendants.
+		require
+			registered: is_registered (a_line)
+		do
+			from
+				Result := lines.index_of (a_line, 1) + 1
+			until
+				Result > lines.count or else not lines.i_th (Result).is_descendant_of (a_line)
+			loop
+				Result := Result + 1
+			end
+		ensure
+			after_parent: Result > lines.index_of (a_line, 1)
+			within_boundary: Result <= lines.count + 1
 		end
 
 feature {NONE} -- Rendering
