@@ -37,7 +37,7 @@ There are no production dependencies beyond the compiler's ELKS base library.
 
 ## Quick start
 
-Create a bar, report absolute progress, and finish it:
+Create a bar and report absolute progress. Reaching its total finishes it automatically:
 
 ```eiffel
 local
@@ -45,7 +45,7 @@ local
 do
     create bar.make (100)
     bar.update (40)
-    bar.finish
+    bar.update (100) -- Automatically finished; no finish call needed.
 end
 ```
 
@@ -74,23 +74,73 @@ do
         child.discard_final_line
         across source_file.parts as part loop
             process (part)
-            child.update (child.position + 1)
+            child.advance (1)
         end
-        child.finish
-        parent.update (parent.position + 1)
+        parent.advance (1)
     end
-    parent.finish
 end
 ```
 
-`make_child` starts a lazy parent automatically. The child shares its parent's
-display and occupies a stable row below it; descendants must finish before their
-parent. Use an explicit `PB_DISPLAY` to coordinate unrelated bars or iterable
-traversals.
+A non-empty `make_child` starts a lazy parent automatically. The child shares its
+parent's display and occupies a stable row below it. Finishing a parent, explicitly
+or by reaching its total, also finishes all open descendants at their actual values.
+Unrelated bars in the same `PB_DISPLAY` remain active.
 
 Unknown totals (`make_unknown`), progress-safe messages (`put_line`), inclusive
 integer ranges (`PB_RANGE`), and configured formatters are covered in the
 [tutorial](docs/tutorial.md).
+
+## Updating and stopping
+
+`position` starts at `0` and reports the last accepted absolute value.
+`update (value)` sets it; `advance (delta)` adds a signed increment. Negative values
+are clamped to zero, and known progress is capped at its total. Reaching or exceeding
+the total irreversibly finishes the bar.
+
+```eiffel
+create bar.make (100)
+bar.advance (40)
+bar.advance (-10) -- 30
+bar.advance (80)  -- 100; automatically finished
+```
+
+Use `finish` to stop early, or to end manually driven progress with an unknown total:
+
+```eiffel
+create bar.make (100)
+bar.update (40)
+bar.finish -- Stops at 40, without claiming 100 completed.
+
+create bar.make_unknown
+bar.advance (7)
+bar.finish -- An unknown total cannot trigger automatic completion.
+```
+
+A finished bar ignores all commands, including `put_line` and formatter changes.
+Its queries remain readable. A zero total creates an already finished, silent bar.
+Use a new bar for a new operation; use `display.put_line` to write messages after
+completion.
+
+## Formatting
+
+Construct with the default formatter, then optionally call `set_formatter`:
+
+```eiffel
+local
+    bar: PB_BAR
+    formatters: PB_FORMATTERS
+do
+    create formatters
+    create bar.make (100)
+    bar.set_formatter (formatters.standard ("Compiling", "classes", "ready"))
+    bar.update (100)
+end
+```
+
+The default `basic` agent already selects a bar for known totals and a spinner for
+unknown totals. `set_formatter` itself prints nothing; a manual bar uses the new
+agent on its next refresh. `PB_ITERABLE` and `PB_RANGE` copy the configured formatter
+to each new cursor, without changing existing traversals.
 
 ## Documentation
 
@@ -131,3 +181,13 @@ make format     # format tracked Eiffel sources with gedoc
 ```
 
 CI runs the shared test suite on Ubuntu, macOS, and Windows.
+
+## API migration
+
+Formatter-only constructor variants (`*_with_formatter`) have been removed from
+`PB_BAR`, `PB_ITERABLE`, and `PB_RANGE`. Use the corresponding constructor without
+that suffix, then `set_formatter (agent)`. Existing formatter agents, snapshots,
+displays, iterables, and range behavior are reused; no new formatter class is needed.
+Remove trailing `finish` calls after known totals are reached. Keep them for early
+termination and manually driven unknown totals. Empty finite traversals now finish
+silently without invoking the formatter.

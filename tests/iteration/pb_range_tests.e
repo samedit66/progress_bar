@@ -27,11 +27,8 @@ feature -- Test
 			visited: ARRAYED_LIST [INTEGER]
 		do
 			reset_capture
-			create range.make_from_to_with_formatter (
-				1,
-				100,
-				agent capture
-			)
+			create range.make_from_to (1, 100)
+			range.set_formatter (agent capture)
 			create visited.make (100)
 			across
 				range
@@ -40,29 +37,10 @@ feature -- Test
 			loop
 				visited.extend (value)
 			end
-			assert_integers_equal (
-				"inclusive count",
-				100,
-				visited.count
-			)
-			assert_integers_equal (
-				"inclusive lower",
-				1,
-				visited.first
-			)
-			assert_integers_equal (
-				"inclusive upper",
-				100,
-				visited.last
-			)
-			assert_true (
-				"inclusive final progress",
-				attached last_progress as progress and then
-					progress.has_total and then
-					progress.total = 100 and then
-					progress.position = 100 and then
-					progress.is_final
-			)
+			assert_integers_equal ("inclusive count", 100, visited.count)
+			assert_integers_equal ("inclusive lower", 1, visited.first)
+			assert_integers_equal ("inclusive upper", 100, visited.last)
+			assert_true ("inclusive final progress", attached last_progress as progress and then progress.has_total and then progress.total = 100 and then progress.position = 100 and then progress.is_final)
 		end
 
 	test_single_item_range
@@ -72,11 +50,8 @@ feature -- Test
 			visited: INTEGER
 		do
 			reset_capture
-			create range.make_from_to_with_formatter (
-				5,
-				5,
-				agent capture
-			)
+			create range.make_from_to (5, 5)
+			range.set_formatter (agent capture)
 			across
 				range
 			as
@@ -84,18 +59,8 @@ feature -- Test
 			loop
 				visited := value
 			end
-			assert_integers_equal (
-				"single value",
-				5,
-				visited
-			)
-			assert_true (
-				"single final progress",
-				attached last_progress as progress and then
-					progress.total = 1 and then
-					progress.position = 1 and then
-					progress.is_final
-			)
+			assert_integers_equal ("single value", 5, visited)
+			assert_true ("single final progress", attached last_progress as progress and then progress.total = 1 and then progress.position = 1 and then progress.is_final)
 		end
 
 	test_empty_reversed_range
@@ -105,34 +70,17 @@ feature -- Test
 			body_calls: INTEGER
 		do
 			reset_capture
-			create range.make_from_to_with_formatter (
-				5,
-				4,
-				agent capture
-			)
+			create range.make_from_to (5, 4)
+			range.set_formatter (agent capture)
 			across
 				range
 			as
 				value
 			loop
-				body_calls :=
-					body_calls +
-						value
+				body_calls := body_calls + value
 			end
-			assert_integers_equal (
-				"empty body",
-				0,
-				body_calls
-			)
-			assert_true (
-				"empty final progress",
-				attached last_progress as progress and then
-					progress.has_total and then
-					progress.total = 0 and then
-					progress.position = 0 and then
-					progress.is_complete and then
-					progress.is_final
-			)
+			assert_integers_equal ("empty body", 0, body_calls)
+			assert_true ("empty traversal is silent", last_progress = Void)
 		end
 
 	test_negative_bounds
@@ -142,11 +90,8 @@ feature -- Test
 			visited: ARRAYED_LIST [INTEGER]
 		do
 			reset_capture
-			create range.make_from_to_with_formatter (
-				-2,
-				2,
-				agent capture
-			)
+			create range.make_from_to (-2, 2)
+			range.set_formatter (agent capture)
 			create visited.make (5)
 			across
 				range
@@ -155,21 +100,9 @@ feature -- Test
 			loop
 				visited.extend (value)
 			end
-			assert_integers_equal (
-				"negative count",
-				5,
-				visited.count
-			)
-			assert_integers_equal (
-				"negative lower",
-				-2,
-				visited.first
-			)
-			assert_integers_equal (
-				"positive upper",
-				2,
-				visited.last
-			)
+			assert_integers_equal ("negative count", 5, visited.count)
+			assert_integers_equal ("negative lower", -2, visited.first)
+			assert_integers_equal ("positive upper", 2, visited.last)
 		end
 
 	test_polymorphic_repeated_traversal
@@ -179,44 +112,25 @@ feature -- Test
 			sum: INTEGER
 		do
 			reset_capture
-			create {PB_RANGE} progress.make_from_to_with_formatter (
-				1,
-				3,
-				agent capture
-			)
+			create {PB_RANGE} progress.make_from_to (1, 3)
+			progress.set_formatter (agent capture)
 			across
 				progress
 			as
 				value
 			loop
-				sum :=
-					sum +
-						value
+				sum := sum + value
 			end
 			across
 				progress
 			as
 				value
 			loop
-				sum :=
-					sum +
-						value
+				sum := sum + value
 			end
-			assert_integers_equal (
-				"two range sums",
-				12,
-				sum
-			)
-			assert_integers_equal (
-				"two initial states",
-				2,
-				initial_count
-			)
-			assert_integers_equal (
-				"two final states",
-				2,
-				final_count
-			)
+			assert_integers_equal ("two range sums", 12, sum)
+			assert_integers_equal ("two initial states", 2, initial_count)
+			assert_integers_equal ("two final states", 2, final_count)
 		end
 
 	test_small_ranges_at_integer_limits
@@ -227,41 +141,25 @@ feature -- Test
 			visited: INTEGER
 		do
 			reset_capture
-			create lower_range.make_from_to_with_formatter (
-				{INTEGER}.min_value,
-				{INTEGER}.min_value +
-					2,
-				agent capture
-			)
+			create lower_range.make_from_to ({INTEGER}.min_value, {INTEGER}.min_value + 2)
+			lower_range.set_formatter (agent capture)
 			across
 				lower_range
 			as
 				value
 			loop
-				visited :=
-					visited +
-						1
+				visited := visited + 1
 			end
-			create upper_range.make_from_to_with_formatter (
-				{INTEGER}.max_value -
-					2,
-				{INTEGER}.max_value,
-				agent capture
-			)
+			create upper_range.make_from_to ({INTEGER}.max_value - 2, {INTEGER}.max_value)
+			upper_range.set_formatter (agent capture)
 			across
 				upper_range
 			as
 				value
 			loop
-				visited :=
-					visited +
-						1
+				visited := visited + 1
 			end
-			assert_integers_equal (
-				"limit item count",
-				6,
-				visited
-			)
+			assert_integers_equal ("limit item count", 6, visited)
 		end
 
 	test_put_line_during_range
@@ -271,32 +169,18 @@ feature -- Test
 			sum: INTEGER
 		do
 			reset_capture
-			create range.make_from_to_with_formatter (
-				1,
-				2,
-				agent capture
-			)
+			create range.make_from_to (1, 2)
+			range.set_formatter (agent capture)
 			across
 				range
 			as
 				value
 			loop
-				sum :=
-					sum +
-						value
+				sum := sum + value
 				range.put_line ("range item")
 			end
-			assert_integers_equal (
-				"range sum",
-				3,
-				sum
-			)
-			assert_true (
-				"range final progress",
-				attached last_progress as progress and then
-					progress.position = 2 and then
-					progress.is_final
-			)
+			assert_integers_equal ("range sum", 3, sum)
+			assert_true ("range final progress", attached last_progress as progress and then progress.position = 2 and then progress.is_final)
 		end
 
 	test_range_uses_supplied_display
@@ -306,16 +190,9 @@ feature -- Test
 			range: PB_RANGE
 		do
 			create display.make
-			create range.make_from_to_in_with_formatter (
-				1,
-				2,
-				display,
-				agent capture
-			)
-			assert_true (
-				"display retained",
-				range.display = display
-			)
+			create range.make_from_to_in (1, 2, display)
+			range.set_formatter (agent capture)
+			assert_true ("display retained", range.display = display)
 		end
 
 feature {NONE} -- Capture

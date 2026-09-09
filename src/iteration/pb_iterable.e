@@ -17,9 +17,7 @@ inherit
 create
 
 	make,
-	make_with_formatter,
-	make_in,
-	make_in_with_formatter
+	make_in
 
 feature {NONE} -- Initialization
 
@@ -35,15 +33,6 @@ feature {NONE} -- Initialization
 			)
 		end
 
-	make_with_formatter (a_source: ITERABLE [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Decorate `a_source` with `a_formatter` and a private display.
-		do
-			initialize_private (
-				a_source,
-				a_formatter
-			)
-		end
-
 	make_in (a_display: PB_DISPLAY; a_source: ITERABLE [G])
 			-- Decorate `a_source` with the default formatter in `a_display`.
 		local
@@ -54,18 +43,6 @@ feature {NONE} -- Initialization
 				a_display,
 				a_source,
 				formatters.basic
-			)
-		ensure
-			display_set: display = a_display
-		end
-
-	make_in_with_formatter (a_display: PB_DISPLAY; a_source: ITERABLE [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Decorate `a_source` with `a_formatter` in `a_display`.
-		do
-			initialize_in (
-				a_display,
-				a_source,
-				a_formatter
 			)
 		ensure
 			display_set: display = a_display
@@ -128,6 +105,12 @@ feature -- Status report
 			-- Should cursors created from now on retain their final line?
 
 feature -- Configuration
+
+	set_formatter (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
+			-- Use `a_formatter` for cursors created from now on.
+		do
+			formatter := a_formatter
+		end
 
 	keep_final_line
 			-- Configure future traversal cursors to retain their final line.

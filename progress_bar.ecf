@@ -25,6 +25,9 @@
     </target>
     <target name="pb_tests" extends="progress_bar">
         <root class="PB_TESTS" feature="make"/>
+        <option>
+            <assertions precondition="true" supplier_precondition="true" postcondition="true" invariant="true" check="true" loop="true"/>
+        </option>
         <setting name="console_application" value="true"/>
         <setting name="executable_name" value="pb_tests"/>
         <library name="gobo_test" location="${GOBO}/library/test/library_skl.ecf" readonly="true"/>

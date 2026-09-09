@@ -28,106 +28,69 @@ feature {NONE} -- Initialization
 			i: INTEGER_64
 		do
 			create formatters
-			create bar.make_with_formatter (
-				10,
-				formatters.standard (
-					"Manual",
-					"steps",
-					"done"
-				)
-			)
+			create bar.make (10)
+			bar.set_formatter (formatters.standard ("Manual", "steps", "done"))
 			from
 				i := 0
 			until
-				i >
-					10
+				i > 10
 			loop
 				bar.update (i)
-				i :=
-					i +
-						1
+				i := i + 1
 			end
-			bar.finish
-			create bar.make_unknown_with_formatter (formatters.unicode)
+			create bar.make_unknown
+			bar.set_formatter (formatters.unicode)
 			from
 				i := 1
 			until
-				i >
-					4
+				i > 4
 			loop
 				bar.update (i)
-				i :=
-					i +
-						1
+				i := i + 1
 			end
 			bar.finish
-			create bar.make_with_formatter (
-				2,
-				formatters.standard (
-					"Files",
-					"files",
-					"complete"
-				)
-			)
+			create bar.make (2)
+			bar.set_formatter (formatters.standard ("Files", "files", "complete"))
 			from
 				i := 1
 			until
-				i >
-					2
+				i > 2
 			loop
-				create child.make_child (
-					bar,
-					3
-				)
+				create child.make_child (bar, 3)
 				child.discard_final_line
 				child.update (1)
 				child.update (2)
 				child.update (3)
-				child.finish
 				bar.update (i)
-				i :=
-					i +
-						1
+				i := i + 1
 			end
+				-- Stop early at the actual value; normal completion needs no finish.
+			create bar.make (100)
+			bar.advance (40)
+			bar.advance (-10)
 			bar.finish
 			create items.make (3)
 			items.extend ("parse")
 			items.extend ("analyze")
 			items.extend ("emit")
-			create progress.make_with_formatter (
-				items,
-				formatters.standard (
-					"Across",
-					"items",
-					"complete"
-				)
-			)
+			create progress.make (items)
+			progress.set_formatter (formatters.standard ("Across", "items", "complete"))
 			across
 				progress
 			as
 				item
 			loop
 				process (item)
-				progress.put_line ("Processed " +
-					item)
+				progress.put_line ("Processed " + item)
 			end
-			create range.make_from_to_with_formatter (
-				1,
-				5,
-				formatters.standard (
-					"Range",
-					"indices",
-					"complete"
-				)
-			)
+			create range.make_from_to (1, 5)
+			range.set_formatter (formatters.standard ("Range", "indices", "complete"))
 			across
 				range
 			as
 				index
 			loop
-				range_sum :=
-					range_sum +
-						index
+				range_sum := range_sum + index
 			end
 		end
 

@@ -42,6 +42,40 @@ feature -- Output
 
 feature {PB_BAR} -- Line lifecycle
 
+	new_closed_line: PB_DISPLAY_LINE
+			-- Unregistered, invisible handle for already complete zero-sized work.
+		do
+			create Result.make (Void)
+			Result.close ("", False)
+		ensure
+			closed: Result.is_closed
+			not_registered: not is_registered (Result)
+		end
+
+	finish_descendants (a_line: PB_DISPLAY_LINE)
+			-- Finish deepest open descendants first, using the existing line order.
+		require
+			registered: is_registered (a_line)
+			open: not a_line.is_closed
+		local
+			index: INTEGER
+			candidate: PB_DISPLAY_LINE
+		do
+			from
+				index := lines.count
+			until
+				index = 0
+			loop
+				candidate := lines.i_th (index)
+				if candidate.is_descendant_of (a_line) and then attached candidate.bar as child then
+					child.finish
+				end
+				index := index - 1
+			end
+		ensure
+			no_open_descendants: not has_open_descendants (a_line)
+		end
+
 	new_line: PB_DISPLAY_LINE
 			-- New pending top-level line at the bottom of Current.
 		do

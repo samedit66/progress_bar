@@ -18,8 +18,8 @@ The library is void-safe and depends only on the ELKS base library.
 
 ## Update a known total manually
 
-Construct `PB_BAR` with a non-negative total, report absolute positions, then
-finish the line:
+Construct `PB_BAR` with a non-negative total and report absolute positions.
+Reaching the total finishes the line automatically:
 
 ```eiffel
 local
@@ -32,7 +32,6 @@ do
         completed := completed + 1
         bar.update (completed)
     end
-    bar.finish
 end
 ```
 
@@ -40,13 +39,22 @@ end
 any producer that already reports `(position, total)` can bind
 `agent bar.update` after constructing the bar with that total.
 
-A known total of zero is valid and complete. It is deliberately different from
-an unknown total.
+`position` starts at zero. Use
+`advance (delta)` for relative changes, including negative corrections:
+
+```eiffel
+create bar.make (100)
+bar.advance (40)
+bar.advance (-10) -- 30
+bar.advance (80)  -- Clamps to 100 and finishes automatically.
+```
+
+Values below zero are clamped to zero. A known total of zero is already finished
+and silent; it is different from an unknown total.
 
 ## Work without a total
 
-Use `make_unknown` or `make_unknown_with_formatter`; do not encode unknown as
-zero:
+Use `make_unknown`; do not encode unknown as zero:
 
 ```eiffel
 create bar.make_unknown
@@ -85,8 +93,8 @@ only conforms to `ITERABLE [G]` receives unknown-total progress.
 
 The progress position advances after the loop body has consumed each item.
 Order, identity, and exceptions from the source cursor are not transformed.
-An empty finite traversal renders the complete `0 / 0` state and finishes
-without entering the loop body.
+An empty finite traversal is already complete, produces no output or formatter
+callbacks, and does not enter the loop body.
 
 The wrapper retains the source rather than copying it. Every `new_cursor` call,
 including every new `across`, creates an independent progress bar and observes
@@ -114,14 +122,15 @@ bar.put_line ("Retrying failed operation")
 The command clears the managed progress block, writes the supplied text followed
 by one newline, and restores every cached line. It does not advance `position`
 or `revision`, change the lifecycle, or invoke any formatter. Before the first
-update and after all bars finish, it writes an ordinary line to standard error.
+update it writes an ordinary line to standard error. A finished manual bar ignores
+`put_line`; use `bar.display.put_line` or the iterable wrapper for later messages.
 
 `PB_RANGE` inherits `put_line` from `PB_ITERABLE [INTEGER]`. All bars and cursors
 created in one `PB_DISPLAY` are restored in stable order.
 
 ## Nest progress bars
 
-Create a child directly from its parent. The first child starts a lazy parent
+Create a child directly from its parent. The first non-empty child starts a lazy parent
 automatically, reuses its display, and occupies the next row below the parent's
 descendants:
 
@@ -138,17 +147,17 @@ do
             chunks.update (chunk_index)
             chunk_index := chunk_index + 1
         end
-        chunks.finish
         files.update (file_index)
         file_index := file_index + 1
     end
-    files.finish
 end
 ```
 
-Children may have their own children. A parent cannot finish while any of its
-descendants is still open; `has_open_children` exposes that state. Child
-progress does not advance or aggregate into its parent automatically.
+Children may have their own children. Finishing a parent explicitly or by reaching
+its total also finishes all open descendants at their actual values.
+`has_open_children` exposes unfinished descendants. Child progress does not advance
+or aggregate into its parent automatically. Empty children are silent and do not
+start a lazy parent.
 
 Final rows are kept by default. Call `discard_final_line` before the first
 update to remove a completed row, or `keep_final_line` to state the default
@@ -170,9 +179,7 @@ do
 end
 ```
 
-The same pattern works with `PB_ITERABLE.make_in`,
-`PB_ITERABLE.make_in_with_formatter`, and the `PB_RANGE` constructors ending
-in `_in`. Every traversal cursor receives its own stable display line. Changing
+The same pattern works with `PB_ITERABLE.make_in` and `PB_RANGE.make_from_to_in`. Every traversal cursor receives its own stable display line. Changing
 an iterable's final-line policy affects only cursors created afterwards.
 
 ## Traverse an integer range
@@ -193,17 +200,13 @@ end
 
 The example traverses `1` through `100` and reports a known total of 100. Equal
 bounds produce one item. Reversed bounds produce a known empty traversal, which
-renders and finishes at `0 / 0` without entering the loop body.
+finishes silently without entering the loop body.
 
-Use `make_from_to_with_formatter` to keep the same range semantics with any
-existing formatter callback:
+Use `set_formatter` after construction for a custom range formatter:
 
 ```eiffel
-create progress.make_from_to_with_formatter (
-    -2,
-    2,
-    formatters.standard ("Scanning", "indices", "complete")
-)
+create progress.make_from_to (-2, 2)
+progress.set_formatter (formatters.standard ("Scanning", "indices", "complete"))
 ```
 
 The progress cursor reports its absolute processed-item count through
@@ -219,14 +222,15 @@ The progress cursor reports its absolute processed-item count through
 - `counter`: position and optional total;
 - `minimal`: percentage or spinner only.
 
-Pass one during construction:
+Set one after construction, before the first update:
 
 ```eiffel
 local
     formatters: PB_FORMATTERS
 do
     create formatters
-    create bar.make_with_formatter (total, formatters.unicode)
+    create bar.make (total)
+    bar.set_formatter (formatters.unicode)
 end
 ```
 
@@ -234,21 +238,29 @@ end
 affixes:
 
 ```eiffel
-create bar.make_with_formatter (
-    classes.count,
-    formatters.standard ("Compiling", "classes", "ready")
-)
+create bar.make (classes.count)
+bar.set_formatter (formatters.standard ("Compiling", "classes", "ready"))
 ```
 
 The copies mean later mutation of the supplied strings cannot silently change
 the formatter.
 
-## Finish reliably
+## Finish early or without a known total
 
-Call `finish` once the operation is done, including from rescue or cleanup code
-when appropriate for the application. It closes the bar's row using its final
-line policy. `finish` is idempotent, so cleanup code may call it even when the
-normal path has already done so. Finish descendants before their parent.
+Known progress completes automatically when `update` or `advance` reaches its
+total. Use `finish` for early termination or manually driven unknown progress:
 
-After `finish`, `update` and `pulse` violate their `not_finished` precondition.
-Construct a new bar for a new operation.
+```eiffel
+create bar.make (100)
+bar.update (40)
+bar.finish -- Stops at 40; does not claim all 100 items were processed.
+```
+
+Completion is irreversible and also stops open descendants at their actual values.
+After completion every command on that bar does nothing. Repeated `finish` calls
+are harmless but unnecessary. Construct a new bar for a new operation.
+
+For `PB_ITERABLE` and `PB_RANGE`, each cursor has its own lifecycle. Exhaustion
+finishes the bar, including unknown sources. Breaking out of an `across` loop early
+or a source exception does not exhaust the cursor: use a manually driven `PB_BAR`
+when explicit cancellation and cleanup are required.

@@ -17,9 +17,7 @@ inherit
 create
 
 	make_from_to,
-	make_from_to_with_formatter,
-	make_from_to_in,
-	make_from_to_in_with_formatter
+	make_from_to_in
 
 feature {NONE} -- Initialization
 
@@ -40,67 +38,15 @@ feature {NONE} -- Initialization
 			make (interval)
 		end
 
-	make_from_to_with_formatter (a_from, a_to: INTEGER; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted progress over all integers from `a_from` through `a_to`, inclusive.
-		require
-			count_representable: is_count_representable (
-				a_from,
-				a_to
-			)
-		local
-			interval: INTEGER_INTERVAL
-		do
-			create interval.make (
-				a_from,
-				a_to
-			)
-			make_with_formatter (
-				interval,
-				a_formatter
-			)
-		end
-
 	make_from_to_in (a_from, a_to: INTEGER; a_display: PB_DISPLAY)
 			-- Create range progress in `a_display`.
 		require
-			count_representable: is_count_representable (
-				a_from,
-				a_to
-			)
+			count_representable: is_count_representable (a_from, a_to)
 		local
 			interval: INTEGER_INTERVAL
 		do
-			create interval.make (
-				a_from,
-				a_to
-			)
-			make_in (
-				a_display,
-				interval
-			)
-		ensure
-			display_set: display = a_display
-		end
-
-	make_from_to_in_with_formatter (a_from, a_to: INTEGER; a_display: PB_DISPLAY; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted range progress in `a_display`.
-		require
-			count_representable: is_count_representable (
-				a_from,
-				a_to
-			)
-		local
-			interval: INTEGER_INTERVAL
-		do
-			create interval.make (
-				a_from,
-				a_to
-			)
-			make_in_with_formatter (
-				a_display,
-				interval,
-				a_formatter
-			)
+			create interval.make (a_from, a_to)
+			make_in (a_display, interval)
 		ensure
 			display_set: display = a_display
 		end

@@ -30,6 +30,21 @@ feature {PB_DISPLAY, PB_DISPLAY_LINE} -- Access
 	text: detachable STRING_32
 			-- Most recently rendered text, if Current has become visible.
 
+feature {PB_DISPLAY, PB_BAR} -- Lifecycle owner
+
+	bar: detachable PB_BAR
+			-- Bar to stop when an ancestor finishes; released on close.
+
+feature {PB_BAR} -- Lifecycle setup
+
+	set_bar (a_bar: PB_BAR)
+		require
+			open: not is_closed
+			unowned: bar = Void
+		do
+			bar := a_bar
+		end
+
 feature {PB_DISPLAY, PB_BAR} -- Status report
 
 	is_closed: BOOLEAN
@@ -87,11 +102,11 @@ feature {PB_DISPLAY} -- Element change
 			text := a_text.twin
 			keeps_final_line := a_keep_final_line
 			is_closed := True
+			bar := Void
 		ensure
 			closed: is_closed
 			policy_set: keeps_final_line = a_keep_final_line
-			text_set: attached text as stored_text and then
-				stored_text.same_string (a_text)
+			text_set: attached text as stored_text and then stored_text.same_string (a_text)
 		end
 
 end

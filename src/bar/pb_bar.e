@@ -13,13 +13,9 @@ class
 create
 
 	make,
-	make_with_formatter,
 	make_unknown,
-	make_unknown_with_formatter,
 	make_in,
-	make_in_with_formatter,
 	make_unknown_in,
-	make_unknown_in_with_formatter,
 	make_child
 
 feature {NONE} -- Initialization
@@ -43,22 +39,6 @@ feature {NONE} -- Initialization
 			total_set: total = a_total
 		end
 
-	make_with_formatter (a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create top-level progress with known `a_total`, a formatter, and a private display.
-		require
-			total_non_negative: a_total >=
-				0
-		do
-			initialize_private (
-				True,
-				a_total,
-				a_formatter
-			)
-		ensure
-			total_known: has_total
-			total_set: total = a_total
-		end
-
 	make_unknown
 			-- Create top-level progress with unknown total and a private display.
 		local
@@ -69,18 +49,6 @@ feature {NONE} -- Initialization
 				False,
 				0,
 				formatters.basic
-			)
-		ensure
-			total_unknown: not has_total
-		end
-
-	make_unknown_with_formatter (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create top-level progress with unknown total, a formatter, and a private display.
-		do
-			initialize_private (
-				False,
-				0,
-				a_formatter
 			)
 		ensure
 			total_unknown: not has_total
@@ -107,24 +75,6 @@ feature {NONE} -- Initialization
 			total_set: total = a_total
 		end
 
-	make_in_with_formatter (a_display: PB_DISPLAY; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted top-level progress with known `a_total` in `a_display`.
-		require
-			total_non_negative: a_total >=
-				0
-		do
-			initialize_in (
-				a_display,
-				True,
-				a_total,
-				a_formatter
-			)
-		ensure
-			display_set: display = a_display
-			total_known: has_total
-			total_set: total = a_total
-		end
-
 	make_unknown_in (a_display: PB_DISPLAY)
 			-- Create top-level progress with unknown total in `a_display`.
 		local
@@ -142,54 +92,31 @@ feature {NONE} -- Initialization
 			total_unknown: not has_total
 		end
 
-	make_unknown_in_with_formatter (a_display: PB_DISPLAY; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
-			-- Create formatted top-level progress with unknown total in `a_display`.
-		do
-			initialize_in (
-				a_display,
-				False,
-				0,
-				a_formatter
-			)
-		ensure
-			display_set: display = a_display
-			total_unknown: not has_total
-		end
-
 	make_child (a_parent: PB_BAR; a_total: INTEGER_64)
 			-- Create progress with known `a_total` nested below `a_parent`.
 			-- Render `a_parent` at its existing position first when necessary.
 		require
 			parent_not_finished: not a_parent.is_finished
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		local
 			formatters: PB_FORMATTERS
 		do
-			if not a_parent.is_started then
+			if a_total > 0 and then not a_parent.is_started then
 				a_parent.update (a_parent.position)
 			end
 			create formatters
-			initialize_child (
-				a_parent,
-				True,
-				a_total,
-				formatters.basic
-			)
+			initialize_child (a_parent, True, a_total, formatters.basic)
 		ensure
-			parent_started: a_parent.is_started
+			parent_started: a_total > 0 implies a_parent.is_started
 			parent_position_unchanged: a_parent.position = old a_parent.position
-			started_parent_revision_unchanged: old a_parent.is_started implies
-				a_parent.revision = old a_parent.revision
-			lazy_parent_revision_advanced: not old a_parent.is_started implies
-				a_parent.revision = old a_parent.revision +
-					1
+			started_parent_revision_unchanged: old a_parent.is_started implies a_parent.revision = old a_parent.revision
+			lazy_parent_revision_advanced: a_total > 0 and not old a_parent.is_started implies a_parent.revision = old a_parent.revision + 1
 			display_shared: display = a_parent.display
 			total_known: has_total
 			total_set: total = a_total
 			child_not_started: not is_started
-			child_open: not is_finished
-			open_child_registered: a_parent.has_open_children
+			child_completion: is_finished = (a_total = 0)
+			open_child_registered: a_total > 0 implies a_parent.has_open_children
 		end
 
 	initialize_private (a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
@@ -212,31 +139,43 @@ feature {NONE} -- Initialization
 	initialize_in (a_display: PB_DISPLAY; a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Initialize top-level Current in `a_display`.
 		require
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		do
 			has_total := a_has_total
 			stored_total := a_total
 			formatter := a_formatter
 			display := a_display
-			display_line := a_display.new_line
+			if a_has_total and a_total = 0 then
+				display_line := a_display.new_closed_line
+			else
+				display_line := a_display.new_line
+			end
 			keeps_final_line := True
+			if not is_finished then
+				display_line.set_bar (Current)
+			end
 		end
 
 	initialize_child (a_parent: PB_BAR; a_has_total: BOOLEAN; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
 			-- Initialize Current immediately below `a_parent` and its descendants.
 		require
-			parent_started: a_parent.is_started
+			parent_started: a_total > 0 implies a_parent.is_started
 			parent_not_finished: not a_parent.is_finished
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		do
 			has_total := a_has_total
 			stored_total := a_total
 			formatter := a_formatter
 			display := a_parent.display
-			display_line := display.new_child_line (a_parent.display_line)
+			if a_has_total and a_total = 0 then
+				display_line := display.new_closed_line
+			else
+				display_line := display.new_child_line (a_parent.display_line)
+			end
 			keeps_final_line := True
+			if not is_finished then
+				display_line.set_bar (Current)
+			end
 		end
 
 feature -- Access
@@ -245,7 +184,7 @@ feature -- Access
 			-- Display coordinating Current with related progress bars.
 
 	position: INTEGER_64
-			-- Current absolute position.
+			-- Last accepted absolute position, initially zero.
 
 	total: INTEGER_64
 			-- Expected total.
@@ -270,7 +209,10 @@ feature -- Status report
 			-- Has Current received an update or pulse?
 
 	is_finished: BOOLEAN
-			-- Has Current terminated its progress line?
+			-- Has Current irreversibly terminated its progress line?
+		do
+			Result := display_line.is_closed
+		end
 
 	keeps_final_line: BOOLEAN
 			-- Should the final line remain visible after `finish`?
@@ -285,81 +227,124 @@ feature -- Status report
 
 feature -- Configuration
 
-	keep_final_line
-			-- Keep the final line visible after `finish`.
-		require
-			not_started: not is_started
-			not_finished: not is_finished
+	set_formatter (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL])
+			-- Apply `a_formatter` on the next refresh; do nothing after completion.
 		do
-			keeps_final_line := True
+			if not is_finished then
+				formatter := a_formatter
+			end
 		ensure
-			kept: keeps_final_line
+			position_unchanged: position = old position
+			revision_unchanged: revision = old revision
+			finished_unchanged: is_finished = old is_finished
+		end
+
+	keep_final_line
+			-- Keep the final line. Closed bars ignore configuration commands.
+		require
+			configurable: is_finished or else not is_started
+		do
+			if not is_finished then
+				keeps_final_line := True
+			end
+		ensure
+			kept_when_active: not is_finished implies keeps_final_line
+			closed_unchanged: old is_finished implies keeps_final_line = old keeps_final_line
 		end
 
 	discard_final_line
-			-- Remove the final line after `finish`.
+			-- Remove the final line. Closed bars ignore configuration commands.
 		require
-			not_started: not is_started
-			not_finished: not is_finished
+			configurable: is_finished or else not is_started
 		do
-			keeps_final_line := False
+			if not is_finished then
+				keeps_final_line := False
+			end
 		ensure
-			discarded: not keeps_final_line
+			discarded_when_active: not is_finished implies not keeps_final_line
+			closed_unchanged: old is_finished implies keeps_final_line = old keeps_final_line
 		end
 
 feature -- Progress
 
 	update (a_current: INTEGER_64)
-			-- Set the current absolute position and refresh its presentation.
-		require
-			not_finished: not is_finished
-			current_non_negative: a_current >=
-				0
+			-- Set absolute progress, clamped to its bounds. Finish at a known total.
 		do
-			position := a_current
-			revision :=
-				revision +
-					1
-			is_started := True
-			refresh (False)
+			if not is_finished then
+				position := a_current.max (0)
+				if has_total then
+					position := position.min (stored_total)
+				end
+				revision := revision + 1
+				is_started := True
+				if has_total and then position = stored_total then
+					finish
+				else
+					refresh (False)
+				end
+			end
 		ensure
-			position_set: position = a_current
-			started: is_started
-			revision_advanced: revision = old revision +
-				1
+			closed_position_unchanged: old is_finished implies position = old position
+			closed_revision_unchanged: old is_finished implies revision = old revision
+			accepted_known: not old is_finished and has_total implies position = a_current.max (0).min (stored_total)
+			accepted_unknown: not old is_finished and not has_total implies position = a_current.max (0)
+			started_when_accepted: not old is_finished implies is_started
+			revision_advanced_when_accepted: not old is_finished implies revision = old revision + 1
+			maximum_finishes: has_total and then position = stored_total implies is_finished
+		end
+
+	advance (a_delta: INTEGER_64)
+			-- Signed relative update, clamped before addition can overflow.
+		local
+			upper: INTEGER_64
+		do
+			if not is_finished then
+				if has_total then
+					upper := stored_total
+				else
+					upper := {INTEGER_64}.max_value
+				end
+				if a_delta > upper - position then
+					update (upper)
+				elseif a_delta < -position then
+					update (0)
+				else
+					update (position + a_delta)
+				end
+			end
+		ensure
+			closed_position_unchanged: old is_finished implies position = old position
+			closed_revision_unchanged: old is_finished implies revision = old revision
 		end
 
 	pulse
-			-- Advance unknown progress animation without changing its position.
+			-- Animate active unknown progress; ignore calls after completion.
 		require
-			not_finished: not is_finished
-			total_unknown: not has_total
+			unknown_when_active: is_finished or else not has_total
 		do
-			revision :=
-				revision +
-					1
-			is_started := True
-			refresh (False)
+			if not is_finished then
+				revision := revision + 1
+				is_started := True
+				refresh (False)
+			end
 		ensure
 			position_unchanged: position = old position
-			started: is_started
-			revision_advanced: revision = old revision +
-				1
+			closed_revision_unchanged: old is_finished implies revision = old revision
+			started_when_accepted: not old is_finished implies is_started
+			revision_advanced_when_accepted: not old is_finished implies revision = old revision + 1
 		end
 
 	finish
-			-- Render the final state and close Current's display line.
-		require
-			finished_or_no_open_descendants: is_finished or else
-				not has_open_children
+			-- Stop all open descendants, then Current, at their actual values.
 		do
 			if not is_finished then
+				display.finish_descendants (display_line)
 				refresh (True)
-				is_finished := True
 			end
 		ensure
 			finished: is_finished
 			position_unchanged: position = old position
+			no_open_children: not has_open_children
 		end
 
 feature -- Output
@@ -367,7 +352,9 @@ feature -- Output
 	put_line (a_message: READABLE_STRING_GENERAL)
 			-- Write `a_message` above all active lines in `display`.
 		do
-			display.put_line (a_message)
+			if not is_finished then
+				display.put_line (a_message)
+			end
 		ensure
 			position_unchanged: position = old position
 			revision_unchanged: revision = old revision
@@ -429,6 +416,7 @@ feature {NONE} -- Implementation
 
 invariant
 
+	known_position_bounded: has_total implies position <= stored_total
 	position_non_negative: position >=
 		0
 	revision_non_negative: revision >=

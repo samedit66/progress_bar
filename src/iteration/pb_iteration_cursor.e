@@ -24,15 +24,11 @@ feature {NONE} -- Initialization
 	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
 			-- Create a cursor with a known `a_total` in `a_display`.
 		require
-			total_non_negative: a_total >=
-				0
+			total_non_negative: a_total >= 0
 		do
 			source_cursor := a_source_cursor
-			create bar.make_in_with_formatter (
-				a_display,
-				a_total,
-				a_formatter
-			)
+			create bar.make_in (a_display, a_total)
+			bar.set_formatter (a_formatter)
 			set_line_policy (a_keep_final_line)
 			start
 		end
@@ -41,10 +37,8 @@ feature {NONE} -- Initialization
 			-- Create a cursor whose total is unknown in `a_display`.
 		do
 			source_cursor := a_source_cursor
-			create bar.make_unknown_in_with_formatter (
-				a_display,
-				a_formatter
-			)
+			create bar.make_unknown_in (a_display)
+			bar.set_formatter (a_formatter)
 			set_line_policy (a_keep_final_line)
 			start
 		end
@@ -63,13 +57,12 @@ feature {NONE} -- Initialization
 			-- Render the initial state and finish immediately for an empty source.
 		do
 			bar.update (0)
-			if source_cursor.after then
+			if source_cursor.after and then not bar.is_finished then
 				bar.finish
 			end
 		ensure
 			zero_processed: processed = 0
-			empty_finished: source_cursor.after implies
-				bar.is_finished
+			empty_finished: source_cursor.after implies bar.is_finished
 		end
 
 feature -- Access
@@ -94,18 +87,14 @@ feature -- Cursor movement
 			-- Move to the next item and report the completed source item.
 		do
 			source_cursor.forth
-			processed :=
-				processed +
-					1
+			processed := processed + 1
 			bar.update (processed)
-			if source_cursor.after then
+			if source_cursor.after and then not bar.is_finished then
 				bar.finish
 			end
 		ensure then
-			processed_advanced: processed = old processed +
-				1
-			finished_at_end: after implies
-				bar.is_finished
+			processed_advanced: processed = old processed + 1
+			finished_at_end: after implies bar.is_finished
 		end
 
 feature {NONE} -- Implementation

@@ -5,53 +5,59 @@
 Creation procedures:
 
 - `make (total)` creates known progress with the ASCII `basic` formatter;
-- `make_with_formatter (total, formatter)` creates known formatted progress;
-- `make_unknown` creates unknown progress with the default formatter;
-- `make_unknown_with_formatter (formatter)` creates unknown formatted
-  progress;
-- `make_in (display, total)` and `make_in_with_formatter (display, total,
-  formatter)` create known top-level progress in an existing display;
-- `make_unknown_in (display)` and `make_unknown_in_with_formatter (display,
-  formatter)` create unknown top-level progress in an existing display;
-- `make_child (parent, total)` creates known progress nested below `parent`.
+- `make_unknown` creates unknown progress with the same agent's spinner mode;
+- `make_in (display, total)` creates known progress in an existing display;
+- `make_unknown_in (display)` creates unknown progress in an existing display;
+- `make_child (parent, total)` creates known progress nested below an active parent.
 
-Known totals and positions must be non-negative. `update (position)` replaces
-the absolute position, marks the bar started, advances `revision`, and invokes
-the formatter. A known position may exceed its total; percentage and fraction
-remain capped at complete.
+`set_formatter (formatter)` replaces the agent for the next refresh without
+printing, changing progress, or changing `revision`. Creation does not print,
+except that a non-empty child starts its lazy parent to establish display order.
+Formatter-only constructor variants have been removed.
 
-`pulse` is valid only for unknown progress. It advances `revision` without
-changing `position`, allowing a spinner or another revision-based formatter to
-change frame.
+`position: INTEGER_64` starts at zero and returns the last accepted absolute value.
+Known totals must be non-negative. A zero total creates an already finished,
+silent bar with no registered display row and no formatter callbacks.
 
-`display` identifies the `PB_DISPLAY` coordinating the bar. A child shares its
-parent's display and has a stable position after the parent and its existing
-descendants. `make_child (parent, total)` creates a lazy child with a known total
-and the default formatter. If the parent is still lazy, creating its first child
-renders the parent at its existing position and advances its revision once.
-Later child creation does not refresh the parent. Child updates do not modify
-parent state.
-`has_open_children` includes every unfinished descendant. A parent may finish
-only after this query becomes false.
+`update (value)` sets the absolute position, clamped to zero and, for known progress,
+to its total. `advance (delta)` applies a signed increment through the same update
+path. Clamping happens before addition can overflow. Unknown progress saturates at
+`INTEGER_64.max_value` without automatically completing. Accepted updates mark the
+bar started and advance `revision`, even when the value is unchanged.
 
-`finish` invokes the formatter with `is_final = True` and closes the line.
-`keeps_final_line` is true by default. `keep_final_line` and
-`discard_final_line` configure the policy before the first update or pulse. A
-kept child row remains in display order until the entire display becomes idle;
-a discarded row is removed on finish. Repeated `finish` calls do nothing.
+Reaching or exceeding a known total completes the bar automatically. The completing
+update invokes the formatter once with `is_final = True`, without an intermediate
+non-final snapshot. `pulse` advances only `revision`; it requires an unknown total
+while active. After completion every command is a no-op, including `pulse`,
+`put_line`, configuration, and repeated `finish`. Queries remain usable.
+
+`finish` stops the bar at its actual value. Both forced and automatic completion
+finish all open descendants, deepest first, without changing their progress values
+or revisions. Each receives its final formatter callback and retention policy.
+Unrelated bars sharing the display remain open. No bar can resume after completion;
+creating a child of a finished parent violates the creation precondition.
+
+`display` identifies the coordinating `PB_DISPLAY`. A child shares its parent's
+display and has a stable position after the parent and its existing descendants.
+A non-empty child starts a lazy parent once; an empty child remains silent and does
+not start the parent. Child updates do not advance the parent.
+`has_open_children` includes every unfinished descendant.
+
+`keeps_final_line` is true by default. `keep_final_line` and `discard_final_line`
+configure the policy before the first update or pulse; finished bars ignore them.
+A kept child row remains in order until the display becomes idle; a discarded row
+is removed on completion.
 
 The formatter is invoked for every accepted update, pulse, and first finish.
-Only terminal output is deduplicated when two non-final calls return identical
-text. Output is written synchronously to standard error and flushed.
+Only terminal output is deduplicated for identical non-final text. Output is
+synchronous, written to standard error, and flushed.
 
-`put_line (message)` writes `message` followed by one newline without
-overwriting active progress. The command clears the complete display block and
-restores every cached row afterward. It does not invoke any formatter or change
-`position`, `revision`, `is_started`, or `is_finished`.
-When the display is idle, it writes an ordinary line. Empty, Unicode, and
-multiline strings are accepted; embedded newlines are preserved, and the
-command still appends its own final newline. Output failures propagate to the
-caller and may leave partially written terminal output.
+`put_line (message)` on an active bar writes above the managed display block and
+restores cached rows without changing progress or invoking formatters. After bar
+completion it does nothing; use `display.put_line` for messages independent of a
+bar's lifetime. Empty, Unicode, and multiline messages are supported. Output and
+formatter failures propagate and may leave partial output or partially completed
+subtrees; commands do not promise atomic completion across I/O failures.
 
 ## `PB_DISPLAY`
 
@@ -60,8 +66,8 @@ caller and may leave partially written terminal output.
 block. `PB_BAR.make_child` derives the display from its parent, so callers do
 not pass both values.
 
-`put_line (message)` is equivalent to calling `put_line` on any associated bar
-or iterable. A display performs synchronous writes to standard error and is a
+`put_line (message)` writes regardless of bar lifetime, including when idle.
+Active bars and iterable wrappers delegate their `put_line` calls to it. A display performs synchronous writes to standard error and is a
 single-thread ownership boundary; it contains no locks or background worker.
 
 ## `PB_PROGRESS`
@@ -86,10 +92,10 @@ the first update or pulse. A final snapshot retains the current revision.
 
 ## `PB_ITERABLE [G]`
 
-`make (source)` and `make_with_formatter (source, formatter)` retain an
-`ITERABLE [G]` with a private display. `make_in (display, source)` and
-`make_in_with_formatter (display, source, formatter)` use an existing display.
-`new_cursor` creates a fresh source cursor, progress bar, and display line.
+`make (source)` retains an `ITERABLE [G]` with a private display.
+`make_in (display, source)` uses an existing display. `set_formatter` configures
+the agent for future cursors. `new_cursor` creates a fresh source cursor and bar,
+with a display line only when the known total is nonzero.
 
 If the source dynamically conforms to `FINITE [G]`, its current `count` becomes
 the cursor's known total. Otherwise the cursor uses unknown mode. The wrapper
@@ -103,22 +109,19 @@ cursor reaches `after`. Consequently the bar represents completed loop bodies.
 private to each cursor, and interleaved cursors retain independent stable rows.
 `keeps_final_line`, `keep_final_line`, and `discard_final_line` configure future
 cursors. A cursor copies the current policy when it is created; later changes
-to the wrapper do not change that cursor.
+to the wrapper do not change that cursor. The same copying rule applies to the
+formatter. Empty finite traversals are silent and invoke no formatter; unknown
+empty traversals still finish explicitly once their cursor reports exhaustion.
 
 ## `PB_RANGE`
 
 `PB_RANGE` is a `PB_ITERABLE [INTEGER]` backed by an `INTEGER_INTERVAL`.
-Creation procedures are:
-
-- `make_from_to (from, to)` for the default formatter;
-- `make_from_to_with_formatter (from, to, formatter)` for a supplied formatter
-  callback;
-- `make_from_to_in (from, to, display)` for a supplied display;
-- `make_from_to_in_with_formatter (from, to, display, formatter)` for both a
-  supplied display and formatter.
+Creation procedures are `make_from_to (from, to)` and
+`make_from_to_in (from, to, display)`. Use inherited `set_formatter` for custom
+formatting of future cursors.
 
 Both bounds are inclusive. Equal bounds produce one item. When `from > to`, the
-range is empty and its fresh cursor renders and finishes known `0 / 0` progress.
+range is empty and its fresh cursor is already finished without output.
 Every traversal otherwise has the same independent-bar and completed-loop-body
 semantics as `PB_ITERABLE [G]`.
 

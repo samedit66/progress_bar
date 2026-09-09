@@ -27,26 +27,14 @@ feature -- Test
 			bar: PB_BAR
 		do
 			create display.make
-			create bar.make_in_with_formatter (
-				display,
-				1,
-				agent position_text
-			)
+			create bar.make_in (display, 2)
+			bar.set_formatter (agent position_text)
 			bar.update (1)
-			assert_true (
-				"redraw sequence",
-				display.captured.same_string ("%Rparent 1")
-			)
+			assert_true ("redraw sequence", display.captured.same_string ("%Rparent 1"))
 			display.reset
 			bar.finish
-			assert_true (
-				"finish sequence",
-				display.captured.same_string ("%Rparent 1%N")
-			)
-			assert_false (
-				"closed query remains valid",
-				bar.has_open_children
-			)
+			assert_true ("finish sequence", display.captured.same_string ("%Rparent 1%N"))
+			assert_false ("closed query remains valid", bar.has_open_children)
 		end
 
 	test_child_uses_parent_display
@@ -56,44 +44,19 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in_with_formatter (
-				display,
-				2,
-				agent position_text
-			)
-			create child.make_child (
-				parent,
-				1
-			)
+			create parent.make_in (display, 2)
+			parent.set_formatter (agent position_text)
+			create child.make_child (parent, 1)
 			child.update (0)
-			assert_true (
-				"shared display",
-				child.display = parent.display
-			)
-			assert_true (
-				"child active",
-				parent.has_open_children
-			)
-			assert_true (
-				"both lines repainted",
-				display.captured.has_substring ("parent 0%N%R[") and then
-					display.captured.has_substring ("0 / 1")
-			)
+			assert_true ("shared display", child.display = parent.display)
+			assert_true ("child active", parent.has_open_children)
+			assert_true ("both lines repainted", display.captured.has_substring ("parent 0%N%R[") and then display.captured.has_substring ("0 / 1"))
 			display.reset
 			parent.update (1)
-			assert_true (
-				"parent update moves up",
-				display.captured.has_substring ({STRING_32} "%/27/[1A")
-			)
-			assert_false (
-				"child not reformatted",
-				display.captured.has_substring ("0 / 1")
-			)
+			assert_true ("parent update moves up", display.captured.has_substring ({STRING_32} "%/27/[1A"))
+			assert_false ("child not reformatted", display.captured.has_substring ("0 / 1"))
 			child.finish
-			assert_false (
-				"child closed",
-				parent.has_open_children
-			)
+			assert_false ("child closed", parent.has_open_children)
 			parent.finish
 		end
 
@@ -104,30 +67,15 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in_with_formatter (
-				display,
-				1,
-				agent position_text
-			)
-			create child.make_child (
-				parent,
-				1
-			)
+			create parent.make_in (display, 1)
+			parent.set_formatter (agent position_text)
+			create child.make_child (parent, 1)
 			child.update (0)
 			display.reset
 			parent.put_line ("first%Nsecond")
-			assert_true (
-				"message retained",
-				display.captured.has_substring ("first%Nsecond")
-			)
-			assert_true (
-				"parent restored",
-				display.captured.has_substring ("parent 0")
-			)
-			assert_true (
-				"child restored",
-				display.captured.has_substring ("0 / 1")
-			)
+			assert_true ("message retained", display.captured.has_substring ("first%Nsecond"))
+			assert_true ("parent restored", display.captured.has_substring ("parent 0"))
+			assert_true ("child restored", display.captured.has_substring ("0 / 1"))
 			child.finish
 			parent.finish
 		end
@@ -139,17 +87,12 @@ feature -- Test
 			bar: PB_BAR
 		do
 			create display.make
-			create bar.make_unknown_in_with_formatter (
-				display,
-				agent constant_text
-			)
+			create bar.make_unknown_in (display)
+			bar.set_formatter (agent constant_text)
 			bar.update (1)
 			display.reset
 			bar.update (2)
-			assert_true (
-				"no duplicate output",
-				display.captured.is_empty
-			)
+			assert_true ("no duplicate output", display.captured.is_empty)
 			bar.finish
 		end
 
@@ -160,31 +103,16 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in_with_formatter (
-				display,
-				1,
-				agent position_text
-			)
-			create child.make_child (
-				parent,
-				1
-			)
+			create parent.make_in (display, 1)
+			parent.set_formatter (agent position_text)
+			create child.make_child (parent, 1)
 			child.discard_final_line
-			child.update (1)
+			child.update (0)
 			display.reset
-			child.finish
-			assert_false (
-				"policy",
-				child.keeps_final_line
-			)
-			assert_true (
-				"parent repainted",
-				display.captured.has_substring ("parent 0")
-			)
-			assert_false (
-				"child removed",
-				display.captured.has_substring ("1 / 1")
-			)
+			child.update (1)
+			assert_false ("policy", child.keeps_final_line)
+			assert_true ("parent repainted", display.captured.has_substring ("parent 0"))
+			assert_false ("child removed", display.captured.has_substring ("1 / 1"))
 			parent.finish
 		end
 
@@ -196,49 +124,18 @@ feature -- Test
 			parent_index, child_index, grandchild_index: INTEGER
 		do
 			create display.make
-			create parent.make_in_with_formatter (
-				display,
-				1,
-				agent position_text
-			)
-			create child.make_child (
-				parent,
-				2
-			)
+			create parent.make_in (display, 1)
+			parent.set_formatter (agent position_text)
+			create child.make_child (parent, 2)
 			child.update (0)
-			create grandchild.make_child (
-				child,
-				3
-			)
+			create grandchild.make_child (child, 3)
 			display.reset
 			grandchild.update (0)
-			parent_index := display.captured.substring_index (
-				"parent 0",
-				1
-			)
-			child_index := display.captured.substring_index (
-				"0 / 2",
-				parent_index +
-					1
-			)
-			grandchild_index := display.captured.substring_index (
-				"0 / 3",
-				child_index +
-					1
-			)
-			assert_true (
-				"depth-first order",
-				parent_index >
-					0 and then
-					child_index >
-						parent_index and then
-					grandchild_index >
-						child_index
-			)
-			assert_true (
-				"parent sees deep descendant",
-				parent.has_open_children
-			)
+			parent_index := display.captured.substring_index ("parent 0", 1)
+			child_index := display.captured.substring_index ("0 / 2", parent_index + 1)
+			grandchild_index := display.captured.substring_index ("0 / 3", child_index + 1)
+			assert_true ("depth-first order", parent_index > 0 and then child_index > parent_index and then grandchild_index > child_index)
+			assert_true ("parent sees deep descendant", parent.has_open_children)
 			grandchild.finish
 			child.finish
 			parent.finish
