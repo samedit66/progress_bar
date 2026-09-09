@@ -27,9 +27,7 @@ feature {NONE} -- Initialization
 		do
 			source_cursor := a_source_cursor
 			create bar.make_in (a_display, a_total)
-			bar.set_formatter (a_formatter)
-			set_line_policy (a_keep_final_line)
-			start
+			configure_and_start (a_formatter, a_keep_final_line)
 		end
 
 	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
@@ -37,31 +35,31 @@ feature {NONE} -- Initialization
 		do
 			source_cursor := a_source_cursor
 			create bar.make_unknown_in (a_display)
-			bar.set_formatter (a_formatter)
-			set_line_policy (a_keep_final_line)
-			start
+			configure_and_start (a_formatter, a_keep_final_line)
 		end
 
-	set_line_policy (a_keep_final_line: BOOLEAN)
-			-- Apply `a_keep_final_line` before the first refresh.
+	configure_and_start (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_keep_final_line: BOOLEAN)
+			-- Configure presentation before the first update, then close an empty source.
 		do
+			bar.set_formatter (a_formatter)
 			if a_keep_final_line then
 				bar.keep_final_line
 			else
 				bar.discard_final_line
 			end
-		end
-
-	start
-			-- Render the initial state and finish immediately for an empty source.
-		do
 			bar.update (0)
-			if source_cursor.after and then not bar.is_finished then
-				bar.finish
-			end
+			finish_if_exhausted
 		ensure
 			zero_processed: processed = 0
 			empty_finished: source_cursor.after implies bar.is_finished
+		end
+
+	finish_if_exhausted
+			-- Close unknown or shortened traversal when its source has no more items.
+		do
+			if source_cursor.after and then not bar.is_finished then
+				bar.finish
+			end
 		end
 
 feature -- Access
@@ -88,9 +86,7 @@ feature -- Cursor movement
 			source_cursor.forth
 			processed := processed + 1
 			bar.update (processed)
-			if source_cursor.after and then not bar.is_finished then
-				bar.finish
-			end
+			finish_if_exhausted
 		ensure then
 			processed_advanced: processed = old processed + 1
 			finished_at_end: after implies bar.is_finished
