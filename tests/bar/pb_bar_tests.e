@@ -309,6 +309,72 @@ feature -- Simplified API tests
 			assert_true ("no pending line prevents final newline", display.captured.ends_with ("%N"))
 		end
 
+feature -- Pulse equivalence
+
+	test_pulse_matches_zero_advance
+			-- Preserve state and exact spinner output at zero, at the limit, and after finish.
+		local
+			pulsed, advanced: PB_BAR
+			pulse_display, advance_display: PB_TEST_DISPLAY
+		do
+			create pulse_display.make
+			create advance_display.make
+			create pulsed.make_unknown_in (pulse_display)
+			create advanced.make_unknown_in (advance_display)
+			pulsed.pulse
+			advanced.advance (0)
+			assert_true ("first pulse starts without progress", pulsed.is_started and pulsed.position = 0 and pulsed.revision = 1)
+			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
+			pulsed.pulse
+			advanced.advance (0)
+			assert_true ("second pulse increments revision", pulsed.revision = 2)
+			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
+			pulsed.update ({INTEGER_64}.max_value)
+			advanced.update ({INTEGER_64}.max_value)
+			pulsed.pulse
+			advanced.advance (0)
+			assert_true ("limit stays open", pulsed.position = {INTEGER_64}.max_value and not pulsed.is_finished)
+			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
+			pulsed.finish
+			advanced.finish
+			pulse_display.reset
+			advance_display.reset
+			pulsed.pulse
+			advanced.advance (0)
+			assert_true ("finished pulse silent", pulse_display.captured.is_empty)
+			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
+		end
+
+	test_pulse_keeps_known_total_contract
+			-- Reject an active known bar, but ignore a pulse after known completion.
+		local
+			bar: PB_BAR
+			display: PB_TEST_DISPLAY
+		do
+			create display.make
+			create bar.make_in (display, 1)
+			assert_exception ("active known pulse rejected", agent bar.pulse)
+			assert_true ("rejected pulse unchanged", bar.position = 0 and bar.revision = 0 and display.captured.is_empty)
+			bar.advance (1)
+			display.reset
+			bar.pulse
+			assert_true ("known finished pulse ignored", bar.is_finished and bar.revision = 1 and display.captured.is_empty)
+			create bar.make_in (display, 0)
+			bar.pulse
+			assert_true ("zero total pulse ignored", bar.is_finished and bar.revision = 0 and display.captured.is_empty)
+		end
+
+feature {NONE} -- Equivalence assertions
+
+	assert_same_pulse_state (pulsed, advanced: PB_BAR; pulse_display, advance_display: PB_TEST_DISPLAY)
+			-- Compare public state and the complete emitted terminal sequence.
+		do
+			assert_true ("same position", pulsed.position = advanced.position)
+			assert_true ("same revision", pulsed.revision = advanced.revision)
+			assert_true ("same lifecycle", pulsed.is_started = advanced.is_started and pulsed.is_finished = advanced.is_finished)
+			assert_true ("same output", pulse_display.captured.same_string (advance_display.captured))
+		end
+
 feature {NONE} -- Capture
 
 	last_progress: detachable PB_PROGRESS

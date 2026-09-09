@@ -294,11 +294,7 @@ feature -- Progress
 		require
 			unknown_when_active: is_finished or else not has_total
 		do
-			if not is_finished then
-				revision := revision + 1
-				is_started := True
-				refresh (False)
-			end
+			advance (0)
 		ensure
 			position_unchanged: position = old position
 			closed_revision_unchanged: old is_finished implies revision = old revision
