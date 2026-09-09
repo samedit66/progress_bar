@@ -52,6 +52,31 @@ feature -- Test
 			assert_true ("sequence", sequence.same_string ("%Rok  %N"))
 		end
 
+	test_finish_frame
+			-- Preserve exact terminal output across final frame sizes and transitions.
+		local
+			lines: ARRAYED_LIST [STRING_32]
+			renderer: PB_TERMINAL_RENDERER
+			sequence: STRING_32
+		do
+			create renderer
+			create lines.make (2)
+			sequence := renderer.finish_frame_sequence (0, 0, lines)
+			assert_true ("empty idle frame", sequence.is_empty)
+			sequence := renderer.finish_frame_sequence (1, 4, lines)
+			assert_true ("discard last row", sequence.same_string ({STRING_32} "%R%/27/[2K"))
+			lines.extend ("ok")
+			sequence := renderer.finish_frame_sequence (0, 0, lines)
+			assert_true ("first and final row", sequence.same_string ("%Rok%N"))
+			sequence := renderer.finish_frame_sequence (1, 4, lines)
+			assert_true ("clear single row tail", sequence.same_string ("%Rok  %N"))
+			sequence := renderer.finish_frame_sequence (2, 4, lines)
+			assert_true ("collapse multiline frame", sequence.same_string ({STRING_32} "%R%/27/[2K%/27/[1A%R%/27/[2Kok%N"))
+			lines.extend ("done")
+			sequence := renderer.finish_frame_sequence (2, 4, lines)
+			assert_true ("retain multiline frame", sequence.same_string ({STRING_32} "%R%/27/[2K%/27/[1A%R%/27/[2Kok%N%Rdone%N"))
+		end
+
 	test_message_above_active_line
 			-- Clear the active line, write a message, and restore the line.
 		local

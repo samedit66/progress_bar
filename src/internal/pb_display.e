@@ -158,11 +158,7 @@ feature {PB_BAR} -- Line lifecycle
 			if has_open_lines then
 				emit (renderer.frame_sequence (old_visible_count, visible_lines))
 			else
-				if visible_lines.count = 1 and then old_visible_count <= 1 then
-					emit (renderer.finish_sequence (visible_lines.first, previous_count))
-				else
-					emit (renderer.commit_frame_sequence (old_visible_count, visible_lines))
-				end
+				emit (renderer.finish_frame_sequence (old_visible_count, previous_count, visible_lines))
 				lines.wipe_out
 			end
 		ensure

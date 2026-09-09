@@ -43,6 +43,20 @@ feature -- Multiline conversion
 			append_frame (Result, a_lines)
 		end
 
+	finish_frame_sequence (a_previous_line_count, a_previous_count: INTEGER; a_lines: ARRAYED_LIST [STRING_32]): STRING_32
+			-- Final frame sequence, clearing the previous tail for a single row.
+			-- `a_previous_count` is the previous text length when at most one row was visible.
+		require
+			previous_line_count_non_negative: a_previous_line_count >= 0
+			previous_count_non_negative: a_previous_count >= 0
+		do
+			if a_lines.count = 1 and then a_previous_line_count <= 1 then
+				Result := finish_sequence (a_lines.first, a_previous_count)
+			else
+				Result := commit_frame_sequence (a_previous_line_count, a_lines)
+			end
+		end
+
 	commit_frame_sequence (a_previous_line_count: INTEGER; a_lines: ARRAYED_LIST [STRING_32]): STRING_32
 			-- Sequence replacing a managed frame and committing its remaining rows.
 		require
