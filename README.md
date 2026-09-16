@@ -1,3 +1,5 @@
+<div align="center">
+
 # progress_bar
 
 [![ISE Eiffel](https://img.shields.io/badge/toolchain-ISE%20Eiffel-17365D)](https://www.eiffel.com/)
@@ -6,6 +8,8 @@
 
 Terminal progress for Eiffel. Void-safe, ELKS-only, with synchronous output to
 standard error and support for EiffelStudio and Gobo.
+
+</div>
 
 ## Quick start
 
