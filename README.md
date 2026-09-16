@@ -111,9 +111,24 @@ end
 
 Step numbers (`file_number` and `part_number`) are `INTEGER`, starting at 1. Each traversal gets its own row.
 By default, the first active row keeps its final text; rows started while others
-are active disappear when finished. Use `keep_final_line` to retain them.
+are active disappear when finished. Use `keep_final_line` to retain a result,
+or `discard_final_line` to always remove it, including a standalone bar.
+Set the policy before starting a manual bar; on an iterable it applies to future
+traversals only.
 These small examples finish immediately; real work belongs before each manual
 `forth` or inside the `across` body.
+
+## Public API at a glance
+
+| Type | Features |
+| --- | --- |
+| `PB_BAR` | `make_with_total`, `make_unknown`; `start`, `forth`, `forth_by`, `set_progress`, `pulse`, `finish`; `progress`, `has_total`, `total`, `is_started`, `is_finished`, `keeps_final_line` |
+| `PB_ITERABLE [G]` | `make_over`, `new_cursor` (used by `across`) |
+| `PB_STEP_BAR` | `make_with_total`; inherits iterable behavior for `INTEGER` steps |
+| All three | `display`, `set_display`, `set_line_formatter`, `keep_final_line`, `discard_final_line`, `put_line` |
+
+Formatter agents receive an immutable `PB_PROGRESS` snapshot; `PB_FORMATTERS`
+provides built-in agents. See the linked class sources and reference below for contracts.
 
 ## Installation and documentation
 

@@ -169,9 +169,8 @@ may receive a display because it never registers a row. Iterable configuration
 changes affect future cursors only. Sharing copies the display reference; replacing
 one object's display later does not redirect other objects.
 
-Sharing a display does not create parent ownership or propagate completion.
-For explicit parent-owned manual work, the existing `make_child (parent, total)`
-constructor is available; see the [reference](reference.md#explicit-manual-children).
+Each bar has an independent lifecycle. Finishing one operation leaves the other
+operations on its display active.
 
 ## Configure formatting
 

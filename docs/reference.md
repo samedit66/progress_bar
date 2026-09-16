@@ -11,7 +11,7 @@ generic parameter or collection interface. It does not inherit `ITERABLE` or `LI
 - `make_unknown` creates progress without a total.
 - `display: PB_DISPLAY` returns the existing display without allocation or output.
 - `set_display (display)` selects a shared display before the bar starts. It rejects
-  finished nonempty bars and explicit children. Zero-total bars remain configurable
+  finished nonempty bars. Zero-total bars remain configurable
   for display sharing, but never register a row.
 - `set_line_formatter (formatter)` changes the next refresh's formatter without
   rendering or changing the progress/revision. Finished bars ignore this command.
@@ -19,7 +19,6 @@ generic parameter or collection interface. It does not inherit `ITERABLE` or `LI
   the bar starts. Finished bars ignore both commands.
 
 Ordinary constructors create a private display but no registered row and no output.
-The advanced `make_child` constructor has different ownership semantics below.
 
 ### Progress and lifecycle
 
@@ -35,7 +34,6 @@ The advanced `make_child` constructor has different ownership semantics below.
 | `has_total`, `total: INTEGER_64` | `total` requires `has_total` |
 | `is_started` | An initial render, update, or pulse has been accepted |
 | `is_finished` | Operation has irreversibly terminated |
-| `revision: INTEGER_64` | Number of accepted progress updates, including initial start and pulses |
 
 Known progress automatically finishes at its total. The completing update formats
 one final snapshot, without an intermediate non-final snapshot. Unknown progress
@@ -43,31 +41,12 @@ saturates at `INTEGER_64.max_value` but does not automatically finish.
 
 A zero total creates an already finished, silent bar; no row or formatter call is
 needed. `finish` before `start` on a nonempty bar renders a final snapshot at zero,
-without an initial frame or incrementing revision. In that case `is_started` remains
+without an initial frame or incrementing the snapshot revision. In that case `is_started` remains
 false, but the finished bar still cannot move to another display.
 
 Finished bars ignore progress commands, `start`, formatting/retention changes, and
 `put_line`. `set_display` is a setup operation with the preconditions above.
 Repeated `finish` is harmless. There is no reset, `item`, or `after` on a manual bar.
-
-### Explicit manual children
-
-`make_child (parent, total)` retains the existing opt-in ownership behavior:
-
-- parent must be unfinished;
-- a nonempty child starts a lazy parent and immediately registers a pending row
-  below the parent's descendants, even before the child's own first update;
-- an empty child is silent and does not start the parent;
-- children use their parent's display and cannot replace it;
-- child final rows are discarded by default, unless explicitly retained;
-- finishing a parent closes its open descendants, deepest first, at their actual
-  values; independent bars on the same display stay open;
-- `is_child` reports explicit ownership and `has_open_children` reports unfinished
-  descendants, including registered pending children;
-- child updates do not automatically advance the parent.
-
-Use ordinary constructors and `set_display` for coordinated output without this
-ownership relationship. Automatic iterable traversals do not infer parent ownership.
 
 ## `PB_ITERABLE [G]`
 
@@ -80,9 +59,8 @@ The wrapper exposes no manual lifecycle or progress commands.
 
 Each cursor copies the current display reference, formatter agent, and retention
 configuration. Changing `set_display`, `set_line_formatter`, `keep_final_line`, or
-`discard_final_line` affects only future cursors. `has_line_policy` indicates whether
-retention was explicitly chosen; `keeps_final_line` describes that explicit choice.
-Without an explicit choice, retention is determined when the cursor starts.
+`discard_final_line` affects only future cursors. Retention configuration is private
+to the wrapper. Without an explicit choice, retention is determined when the cursor starts.
 
 The total is `FINITE [G].count` when the source conforms, otherwise unknown.
 No counting pass is performed. Size changes during traversal are unsupported.
@@ -119,7 +97,7 @@ For arbitrary integer bounds, pass an `INTEGER_INTERVAL` to `PB_ITERABLE.make_ov
 
 The display owns the ordered terminal block; each bar retains a stable row handle.
 Ordinary bars register on first rendering. Unstarted ordinary bars do not keep the
-display busy. Explicit children are the pending-row exception described above.
+display busy. Completing a bar never closes another bar on the shared display.
 
 A private display is the default. To coordinate output, call
 `second.set_display (first.display)` before starting. Separate display instances do
@@ -134,7 +112,7 @@ active rows, not syntactic nesting; use `keep_final_line` for overlapping indepe
 operations whose results should both remain visible.
 
 The choice is fixed at the first render, so later closure of other rows cannot
-change it. Explicit children discard by default. Retained completed rows remain
+change it. Retained completed rows remain
 in their ordered positions while other rows are active. When the display becomes
 idle, retained text is committed with a final newline and the registry is cleared.
 Discarded rows are removed from the registry immediately, avoiding accumulation
@@ -159,7 +137,7 @@ for one thread; there is no timer, background worker, or automatic terminal dete
 Text widths use Eiffel character counts, not terminal display columns. Wide glyphs,
 combining characters, tabs, and line wrapping need application-level care.
 
-Formatter and output failures propagate. State updates, row registration, subtree
+Formatter and output failures propagate. State updates, row registration,
 completion, and terminal writes are not transactional; failures may leave partially
 completed work or output. No automatic retry or exception-swallowing is added.
 
@@ -167,7 +145,9 @@ completed work or output. No automatic retry or exception-swallowing is added.
 
 [`PB_PROGRESS`](../src/progress/pb_progress.e) remains an immutable snapshot with
 `position`, `revision`, `has_total`, guarded `total`, `fraction`, `percentage`,
-`is_complete`, and `is_final`. Snapshot `position` corresponds to `PB_BAR.progress`.
+`is_complete`, and `is_final`. Snapshot `position` corresponds to `PB_BAR.progress`. The snapshot
+`revision` counts accepted progress updates, including initial start and pulses;
+it is not a query on `PB_BAR`.
 For known zero totals, the fraction is 1 and percentage is 100.
 
 [`PB_FORMATTERS`](../src/formatter/pb_formatters.e) supplies agents with this type:
