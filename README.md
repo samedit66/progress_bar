@@ -36,11 +36,9 @@ feature {NONE} -- Initialization
             files, parts: PB_STEP_BAR
             processed_parts: INTEGER
         do
-            create formatters
-
             -- 1. Manual progress: start displays zero; forth adds one and finishes at 10.
+            -- Default formatter: ASCII progress bar, percentage, and completed/total count.
             create bar.make_with_total (10)
-            bar.set_line_formatter (formatters.standard ("Manual", "steps", "done"))
             from
                 bar.start
             until
@@ -50,14 +48,16 @@ feature {NONE} -- Initialization
             end
 
             -- 2. Unknown total: updates animate a spinner; finish closes it explicitly.
+            -- Default formatter: ASCII spinner and completed count.
             create bar.make_unknown
-            bar.set_line_formatter (formatters.standard ("Unknown", "items", "done"))
             bar.start
             bar.forth_by (4)
             bar.pulse
             bar.finish
 
             -- 3. Absolute progress: early finish preserves the actual value, 40/100.
+            -- Optional custom formatting adds a label.
+            create formatters
             create bar.make_with_total (100)
             bar.set_line_formatter (formatters.standard ("Stopped early", "items", ""))
             bar.set_progress (40)
