@@ -48,7 +48,7 @@ Connect it directly:
 
 ```eiffel
 create bar.make_unknown
-bar.set_formatter (agent format_files)
+bar.set_line_formatter (agent format_files)
 ```
 
 ## Configured formatter object
@@ -82,8 +82,8 @@ Then pass the closed agent:
 
 ```eiffel
 create formatter.make ("Indexing", "documents")
-create bar.make (documents.count)
-bar.set_formatter (agent formatter.format)
+create bar.make_with_total (documents.count)
+bar.set_line_formatter (agent formatter.format)
 ```
 
 Copy caller-owned strings in `make` when later external mutation must not alter

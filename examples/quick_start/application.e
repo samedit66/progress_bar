@@ -2,7 +2,7 @@ note
 
 	description:
 
-		"Demonstrate manual, unknown, iterable, and range progress."
+		"Demonstrate manual progress, automatic traversal, and nested step bars."
 
 	author: "samedit66 <samedit66@yandex.ru>"
 	library: "progress_bar"
@@ -16,90 +16,68 @@ create
 feature {NONE} -- Initialization
 
 	make
-			-- Run the quick-start examples.
+			-- Run complete examples of the public API.
 		local
-			bar, child: PB_BAR
+			bar: PB_BAR
 			formatters: PB_FORMATTERS
 			items: ARRAYED_LIST [STRING]
 			progress: PB_ITERABLE [STRING]
-			range: PB_RANGE
-			range_sum: INTEGER
-			i: INTEGER_64
+			files, parts: PB_STEP_BAR
+			processed_parts: INTEGER
 		do
 			create formatters
-			create bar.make (10)
-			bar.set_formatter (formatters.standard ("Manual", "steps", "done"))
+			create bar.make_with_total (10)
+			bar.set_line_formatter (formatters.standard ("Manual", "steps", "done"))
 			from
-				i := 0
+				bar.start
 			until
-				i > 10
+				bar.is_finished
 			loop
-				bar.update (i)
-				i := i + 1
+				bar.forth
 			end
 			create bar.make_unknown
-			bar.set_formatter (formatters.unicode)
-			from
-				i := 1
-			until
-				i > 4
-			loop
-				bar.update (i)
-				i := i + 1
-			end
+			bar.set_line_formatter (formatters.standard ("Unknown", "items", "done"))
+			bar.start
+			bar.forth_by (4)
+			bar.pulse
 			bar.finish
-			create bar.make (2)
-			bar.set_formatter (formatters.standard ("Files", "files", "complete"))
-			from
-				i := 1
-			until
-				i > 2
-			loop
-				create child.make_child (bar, 3)
-				child.discard_final_line
-				child.update (1)
-				child.update (2)
-				child.update (3)
-				bar.update (i)
-				i := i + 1
-			end
-				-- Stop early at the actual value; normal completion needs no finish.
-			create bar.make (100)
-			bar.advance (40)
-			bar.advance (-10)
+			create bar.make_with_total (100)
+			bar.set_line_formatter (formatters.standard ("Stopped early", "items", ""))
+			bar.set_progress (40)
 			bar.finish
 			create items.make (3)
 			items.extend ("parse")
 			items.extend ("analyze")
 			items.extend ("emit")
-			create progress.make (items)
-			progress.set_formatter (formatters.standard ("Across", "items", "complete"))
+			create progress.make_over (items)
+			progress.set_line_formatter (formatters.standard ("Pipeline", "stages", "done"))
 			across
 				progress
 			as
 				item
 			loop
-				process (item)
 				progress.put_line ("Processed " + item)
 			end
-			create range.make_from_to (1, 5)
-			range.set_formatter (formatters.standard ("Range", "indices", "complete"))
+			create files.make_with_total (3)
+			files.set_line_formatter (formatters.standard ("Files", "files", "done"))
+			create parts.make_with_total (2)
+			parts.set_display (files.display)
+			parts.set_line_formatter (formatters.standard ("  Parts", "parts", "done"))
 			across
-				range
+				files
 			as
-				index
+				file_number
 			loop
-				range_sum := range_sum + index
+				across
+					parts
+				as
+					part_number
+				loop
+					processed_parts := processed_parts + 1
+					parts.put_line ("File " + file_number.out + ", part " + part_number.out)
+				end
 			end
-		end
-
-feature {NONE} -- Basic operation
-
-	process (a_item: STRING)
-			-- Stand in for application work on `a_item`.
-		require
-			item_not_empty: not a_item.is_empty
-		do
+			files.put_line ("Processed " + processed_parts.out + " parts")
 		end
 
 end
