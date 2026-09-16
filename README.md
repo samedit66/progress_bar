@@ -126,7 +126,6 @@ Add the repository to your application and reference `progress_bar.ecf`:
 - [Tutorial](docs/tutorial.md): setup, manual updates, traversal, and sharing displays.
 - [API reference](docs/reference.md): contracts, lifecycle, rendering, and limitations.
 - [Formatters](docs/formatters.md): agents using [`PB_PROGRESS`](src/progress/pb_progress.e) and [`PB_FORMATTERS`](src/formatter/pb_formatters.e).
-- [Migration](docs/migration.md): changes from the previous API.
 - [Quick-start application](examples/quick_start/application.e): complete executable examples.
 - [Display](src/internal/pb_display.e), [row handle](src/internal/pb_display_line.e), [renderer](src/internal/pb_terminal_renderer.e), and [iteration cursor](src/iteration/pb_iteration_cursor.e): implementation details.
 
