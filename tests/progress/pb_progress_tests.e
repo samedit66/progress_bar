@@ -24,12 +24,12 @@ feature -- Test
 		local
 			bar: PB_BAR
 		do
-			create bar.make (8)
-			bar.set_formatter (agent capture)
-			bar.update (2)
+			create bar.make_with_total (8)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (2)
 			assert_true ("snapshot captured", attached last_progress as progress and then progress.fraction = 0.25)
 			assert_true ("percentage", attached last_progress as progress and then progress.percentage = 25)
-			bar.update (12)
+			bar.set_progress (12)
 			assert_true ("fraction clipped", attached last_progress as progress and then progress.fraction = 1.0)
 			assert_true ("complete", attached last_progress as progress and then progress.is_complete)
 			bar.finish
@@ -41,11 +41,11 @@ feature -- Test
 			bar: PB_BAR
 		do
 			last_progress := Void
-			create bar.make (0)
-			bar.set_formatter (agent capture)
-			bar.update (0)
+			create bar.make_with_total (0)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (0)
 			bar.finish
-			assert_true ("empty complete", bar.is_finished and bar.position = 0)
+			assert_true ("empty complete", bar.is_finished and bar.progress = 0)
 			assert_true ("no empty snapshot", last_progress = Void)
 		end
 
@@ -55,8 +55,8 @@ feature -- Test
 			bar: PB_BAR
 		do
 			create bar.make_unknown
-			bar.set_formatter (agent capture)
-			bar.update (0)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (0)
 			assert_true ("unknown captured", attached last_progress as progress and then not progress.has_total)
 			assert_true ("unknown not complete", attached last_progress as progress and then not progress.is_complete)
 			bar.finish

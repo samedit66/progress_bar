@@ -31,8 +31,8 @@ feature -- Test
 			source.extend (4)
 			source.extend (5)
 			source.extend (6)
-			create iterable.make (source)
-			iterable.set_formatter (agent capture)
+			create iterable.make_over (source)
+			iterable.set_line_formatter (agent capture)
 			create visited.make (3)
 			across
 				iterable
@@ -60,8 +60,8 @@ feature -- Test
 			source.extend (7)
 			source.extend (8)
 			create unknown.make (source)
-			create iterable.make (unknown)
-			iterable.set_formatter (agent capture)
+			create iterable.make_over (unknown)
+			iterable.set_line_formatter (agent capture)
 			across
 				iterable
 			as
@@ -82,8 +82,8 @@ feature -- Test
 		do
 			reset_capture
 			create source.make (0)
-			create iterable.make (source)
-			iterable.set_formatter (agent capture)
+			create iterable.make_over (source)
+			iterable.set_line_formatter (agent capture)
 			across
 				iterable
 			as
@@ -105,8 +105,8 @@ feature -- Test
 			reset_capture
 			create source.make (1)
 			source.extend (1)
-			create iterable.make (source)
-			iterable.set_formatter (agent capture)
+			create iterable.make_over (source)
+			iterable.set_line_formatter (agent capture)
 			across
 				iterable
 			as
@@ -140,10 +140,12 @@ feature -- Test
 			first_source.extend (1)
 			create second_source.make (1)
 			second_source.extend (2)
-			create first_iterable.make_in (display, first_source)
-			first_iterable.set_formatter (agent first_text)
-			create second_iterable.make_in (display, second_source)
-			second_iterable.set_formatter (agent second_text)
+			create first_iterable.make_over (first_source)
+			first_iterable.set_display (display)
+			first_iterable.set_line_formatter (agent first_text)
+			create second_iterable.make_over (second_source)
+			second_iterable.set_display (display)
+			second_iterable.set_line_formatter (agent second_text)
 			first_cursor := first_iterable.new_cursor
 			second_cursor := second_iterable.new_cursor
 			display.reset
@@ -165,8 +167,9 @@ feature -- Test
 			create display.make
 			create source.make (1)
 			source.extend (1)
-			create iterable.make_in (display, source)
-			iterable.set_formatter (agent first_text)
+			create iterable.make_over (source)
+			iterable.set_display (display)
+			iterable.set_line_formatter (agent first_text)
 			kept_cursor := iterable.new_cursor
 			iterable.discard_final_line
 			display.reset
@@ -191,11 +194,12 @@ feature -- Configuration and empty unknown source
 			create display.make
 			create source.make (1)
 			source.extend (1)
-			create iterable.make_in (display, source)
-			iterable.set_formatter (agent first_text)
+			create iterable.make_over (source)
+			iterable.set_display (display)
+			iterable.set_line_formatter (agent first_text)
 			first_cursor := iterable.new_cursor
 			display.reset
-			iterable.set_formatter (agent second_text)
+			iterable.set_line_formatter (agent second_text)
 			assert_true ("configuration silent", display.captured.is_empty)
 			first_cursor.forth
 			assert_true ("old cursor retains formatter", display.captured.has_substring ("first 1"))
@@ -217,8 +221,8 @@ feature -- Configuration and empty unknown source
 			reset_capture
 			create source.make (0)
 			create unknown.make (source)
-			create iterable.make (unknown)
-			iterable.set_formatter (agent capture)
+			create iterable.make_over (unknown)
+			iterable.set_line_formatter (agent capture)
 			cursor := iterable.new_cursor
 			assert_true ("empty unknown exhausted", cursor.after)
 			assert_true ("unknown closed once", final_count = 1)

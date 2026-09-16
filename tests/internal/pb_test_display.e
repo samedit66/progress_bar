@@ -22,6 +22,12 @@ create
 
 feature -- Access
 
+	registered_line_count: INTEGER
+			-- Number of row handles retained by the display, including final rows.
+		do
+			Result := lines.count
+		end
+
 	captured: STRING_32
 			-- All output emitted since the last reset.
 		do

@@ -37,16 +37,6 @@ feature -- Output
 
 feature {PB_BAR} -- Line lifecycle
 
-	new_closed_line: PB_DISPLAY_LINE
-			-- Unregistered, invisible handle for already complete zero-sized work.
-		do
-			create Result.make (Void)
-			Result.close ("", False)
-		ensure
-			closed: Result.is_closed
-			not_registered: not is_registered (Result)
-		end
-
 	finish_descendants (a_line: PB_DISPLAY_LINE)
 			-- Finish the contiguous subtree in reverse display order.
 		require
@@ -154,6 +144,11 @@ feature {PB_BAR} -- Line lifecycle
 				previous_count := old_text.count
 			end
 			a_line.close (a_text, a_keep_final_line)
+			if not a_keep_final_line then
+					-- Repeated inner traversals must not accumulate invisible row handles.
+				lines.go_i_th (lines.index_of (a_line, 1))
+				lines.remove
+			end
 			visible_lines := current_lines
 			if has_open_lines then
 				emit (renderer.frame_sequence (old_visible_count, visible_lines))
@@ -279,6 +274,8 @@ feature {NONE} -- Rendering
 			end
 		end
 
+feature {PB_BAR} -- Status report
+
 	has_open_lines: BOOLEAN
 			-- Is any registered line unfinished?
 		do
@@ -292,6 +289,8 @@ feature {NONE} -- Rendering
 				Result := not line_cursor.is_closed
 			end
 		end
+
+feature {NONE} -- Output
 
 	emit (a_sequence: STRING_32)
 			-- Write `a_sequence` to standard error immediately.

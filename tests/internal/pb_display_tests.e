@@ -26,9 +26,10 @@ feature -- Test
 			bar: PB_BAR
 		do
 			create display.make
-			create bar.make_in (display, 2)
-			bar.set_formatter (agent position_text)
-			bar.update (1)
+			create bar.make_with_total (2)
+			bar.set_display (display)
+			bar.set_line_formatter (agent position_text)
+			bar.set_progress (1)
 			assert_true ("redraw sequence", display.captured.same_string ("%Rparent 1"))
 			display.reset
 			bar.finish
@@ -43,15 +44,16 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in (display, 2)
-			parent.set_formatter (agent position_text)
+			create parent.make_with_total (2)
+			parent.set_display (display)
+			parent.set_line_formatter (agent position_text)
 			create child.make_child (parent, 1)
-			child.update (0)
+			child.set_progress (0)
 			assert_true ("shared display", child.display = parent.display)
 			assert_true ("child active", parent.has_open_children)
 			assert_true ("both lines repainted", display.captured.has_substring ("parent 0%N%R[") and then display.captured.has_substring ("0 / 1"))
 			display.reset
-			parent.update (1)
+			parent.set_progress (1)
 			assert_true ("parent update moves up", display.captured.has_substring ({STRING_32} "%/27/[1A"))
 			assert_false ("child not reformatted", display.captured.has_substring ("0 / 1"))
 			child.finish
@@ -66,10 +68,11 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in (display, 1)
-			parent.set_formatter (agent position_text)
+			create parent.make_with_total (1)
+			parent.set_display (display)
+			parent.set_line_formatter (agent position_text)
 			create child.make_child (parent, 1)
-			child.update (0)
+			child.set_progress (0)
 			display.reset
 			parent.put_line ("first%Nsecond")
 			assert_true ("message retained", display.captured.has_substring ("first%Nsecond"))
@@ -86,11 +89,12 @@ feature -- Test
 			bar: PB_BAR
 		do
 			create display.make
-			create bar.make_unknown_in (display)
-			bar.set_formatter (agent constant_text)
-			bar.update (1)
+			create bar.make_unknown
+			bar.set_display (display)
+			bar.set_line_formatter (agent constant_text)
+			bar.set_progress (1)
 			display.reset
-			bar.update (2)
+			bar.set_progress (2)
 			assert_true ("no duplicate output", display.captured.is_empty)
 			bar.finish
 		end
@@ -102,13 +106,14 @@ feature -- Test
 			parent, child: PB_BAR
 		do
 			create display.make
-			create parent.make_in (display, 1)
-			parent.set_formatter (agent position_text)
+			create parent.make_with_total (1)
+			parent.set_display (display)
+			parent.set_line_formatter (agent position_text)
 			create child.make_child (parent, 1)
 			child.discard_final_line
-			child.update (0)
+			child.set_progress (0)
 			display.reset
-			child.update (1)
+			child.set_progress (1)
 			assert_false ("policy", child.keeps_final_line)
 			assert_true ("parent repainted", display.captured.has_substring ("parent 0"))
 			assert_false ("child removed", display.captured.has_substring ("1 / 1"))
@@ -123,13 +128,14 @@ feature -- Test
 			parent_index, child_index, grandchild_index: INTEGER
 		do
 			create display.make
-			create parent.make_in (display, 1)
-			parent.set_formatter (agent position_text)
+			create parent.make_with_total (1)
+			parent.set_display (display)
+			parent.set_line_formatter (agent position_text)
 			create child.make_child (parent, 2)
-			child.update (0)
+			child.set_progress (0)
 			create grandchild.make_child (child, 3)
 			display.reset
-			grandchild.update (0)
+			grandchild.set_progress (0)
 			parent_index := display.captured.substring_index ("parent 0", 1)
 			child_index := display.captured.substring_index ("0 / 2", parent_index + 1)
 			grandchild_index := display.captured.substring_index ("0 / 3", child_index + 1)

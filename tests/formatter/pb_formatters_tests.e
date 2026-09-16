@@ -27,9 +27,9 @@ feature -- Test
 		do
 			create formatters
 			selected_formatter := formatters.basic
-			create bar.make (10)
-			bar.set_formatter (agent capture)
-			bar.update (5)
+			create bar.make_with_total (10)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (5)
 			assert_true ("bar", attached last_text as text and then text.has_substring ("[###############---------------]"))
 			assert_true ("percentage", attached last_text as text and then text.has_substring ("50%%"))
 			assert_true ("counter", attached last_text as text and then text.has_substring ("5 / 10"))
@@ -45,8 +45,8 @@ feature -- Test
 			create formatters
 			selected_formatter := formatters.basic
 			create bar.make_unknown
-			bar.set_formatter (agent capture)
-			bar.update (3)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (3)
 			assert_true ("first update spinner", attached last_text as text and then text.starts_with ("/"))
 			bar.pulse
 			assert_true ("pulse spinner", attached last_text as text and then text.starts_with ("-"))
@@ -71,9 +71,9 @@ feature -- Test
 			label.wipe_out
 			unit.wipe_out
 			post_label.wipe_out
-			create bar.make (4)
-			bar.set_formatter (agent capture)
-			bar.update (1)
+			create bar.make_with_total (4)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (1)
 			assert_true ("copied label", attached last_text as text and then text.starts_with ("Compiling"))
 			assert_true ("copied unit", attached last_text as text and then text.has_substring ("classes"))
 			assert_true ("copied post label", attached last_text as text and then text.ends_with ("ready"))
@@ -88,9 +88,9 @@ feature -- Test
 		do
 			create formatters
 			selected_formatter := formatters.unicode
-			create bar.make (2)
-			bar.set_formatter (agent capture)
-			bar.update (1)
+			create bar.make_with_total (2)
+			bar.set_line_formatter (agent capture)
+			bar.set_progress (1)
 			assert_true ("full block", attached last_text as text and then text.has_code (0x2588))
 			assert_true ("empty block", attached last_text as text and then text.has_code (0x2591))
 			bar.finish

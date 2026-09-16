@@ -20,34 +20,38 @@ create {PB_ITERABLE}
 
 feature {NONE} -- Initialization
 
-	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
+	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_has_line_policy, a_keep_final_line: BOOLEAN)
 			-- Create a cursor with a known `a_total` in `a_display`.
 		require
 			total_non_negative: a_total >= 0
 		do
 			source_cursor := a_source_cursor
-			create bar.make_in (a_display, a_total)
-			configure_and_start (a_formatter, a_keep_final_line)
+			create bar.make_with_total (a_total)
+			bar.set_display (a_display)
+			configure_and_start (a_formatter, a_has_line_policy, a_keep_final_line)
 		end
 
-	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_keep_final_line: BOOLEAN)
+	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_has_line_policy, a_keep_final_line: BOOLEAN)
 			-- Create a cursor whose total is unknown in `a_display`.
 		do
 			source_cursor := a_source_cursor
-			create bar.make_unknown_in (a_display)
-			configure_and_start (a_formatter, a_keep_final_line)
+			create bar.make_unknown
+			bar.set_display (a_display)
+			configure_and_start (a_formatter, a_has_line_policy, a_keep_final_line)
 		end
 
-	configure_and_start (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_keep_final_line: BOOLEAN)
+	configure_and_start (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_has_line_policy, a_keep_final_line: BOOLEAN)
 			-- Configure presentation before the first update, then close an empty source.
 		do
-			bar.set_formatter (a_formatter)
-			if a_keep_final_line then
-				bar.keep_final_line
-			else
-				bar.discard_final_line
+			bar.set_line_formatter (a_formatter)
+			if a_has_line_policy then
+				if a_keep_final_line then
+					bar.keep_final_line
+				else
+					bar.discard_final_line
+				end
 			end
-			bar.update (0)
+			bar.start
 			finish_if_exhausted
 		ensure
 			zero_processed: processed = 0
@@ -85,7 +89,7 @@ feature -- Cursor movement
 		do
 			source_cursor.forth
 			processed := processed + 1
-			bar.update (processed)
+			bar.set_progress (processed)
 			finish_if_exhausted
 		ensure then
 			processed_advanced: processed = old processed + 1
