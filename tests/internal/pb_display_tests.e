@@ -30,56 +30,57 @@ feature -- Test
 			bar.set_display (display)
 			bar.set_line_formatter (agent position_text)
 			bar.set_progress (1)
-			assert_true ("redraw sequence", display.captured.same_string ("%Rparent 1"))
+			assert_true ("redraw sequence", display.captured.same_string ("%Rfirst 1"))
 			display.reset
 			bar.finish
-			assert_true ("finish sequence", display.captured.same_string ("%Rparent 1%N"))
-			assert_false ("closed query remains valid", bar.has_open_children)
+			assert_true ("finish sequence", display.captured.same_string ("%Rfirst 1%N"))
 		end
 
-	test_child_uses_parent_display
-			-- Render a child below its parent and update either line independently.
+	test_shared_rows_update_independently
+			-- Render a second below its first and update either line independently.
 		local
 			display: PB_TEST_DISPLAY
-			parent, child: PB_BAR
+			first, second: PB_BAR
 		do
 			create display.make
-			create parent.make_with_total (2)
-			parent.set_display (display)
-			parent.set_line_formatter (agent position_text)
-			create child.make_child (parent, 1)
-			child.set_progress (0)
-			assert_true ("shared display", child.display = parent.display)
-			assert_true ("child active", parent.has_open_children)
-			assert_true ("both lines repainted", display.captured.has_substring ("parent 0%N%R[") and then display.captured.has_substring ("0 / 1"))
+			create first.make_with_total (2)
+			first.set_display (display)
+			first.set_line_formatter (agent position_text)
+			first.start
+			create second.make_with_total (1)
+			second.set_display (first.display)
+			second.set_progress (0)
+			assert_true ("shared display", second.display = first.display)
+			assert_true ("both lines repainted", display.captured.has_substring ("first 0%N%R[") and then display.captured.has_substring ("0 / 1"))
 			display.reset
-			parent.set_progress (1)
-			assert_true ("parent update moves up", display.captured.has_substring ({STRING_32} "%/27/[1A"))
-			assert_false ("child not reformatted", display.captured.has_substring ("0 / 1"))
-			child.finish
-			assert_false ("child closed", parent.has_open_children)
-			parent.finish
+			first.set_progress (1)
+			assert_true ("first update moves up", display.captured.has_substring ({STRING_32} "%/27/[1A"))
+			assert_false ("second not reformatted", display.captured.has_substring ("0 / 1"))
+			second.finish
+			first.finish
 		end
 
 	test_put_line_repaints_complete_frame
 			-- Preserve every active line around a multiline message.
 		local
 			display: PB_TEST_DISPLAY
-			parent, child: PB_BAR
+			first, second: PB_BAR
 		do
 			create display.make
-			create parent.make_with_total (1)
-			parent.set_display (display)
-			parent.set_line_formatter (agent position_text)
-			create child.make_child (parent, 1)
-			child.set_progress (0)
+			create first.make_with_total (1)
+			first.set_display (display)
+			first.set_line_formatter (agent position_text)
+			first.start
+			create second.make_with_total (1)
+			second.set_display (first.display)
+			second.set_progress (0)
 			display.reset
-			parent.put_line ("first%Nsecond")
+			first.put_line ("first%Nsecond")
 			assert_true ("message retained", display.captured.has_substring ("first%Nsecond"))
-			assert_true ("parent restored", display.captured.has_substring ("parent 0"))
-			assert_true ("child restored", display.captured.has_substring ("0 / 1"))
-			child.finish
-			parent.finish
+			assert_true ("first restored", display.captured.has_substring ("first 0"))
+			assert_true ("second restored", display.captured.has_substring ("0 / 1"))
+			second.finish
+			first.finish
 		end
 
 	test_unchanged_line_does_not_emit
@@ -99,51 +100,56 @@ feature -- Test
 			bar.finish
 		end
 
-	test_discarded_child_is_removed
-			-- Remove a child's final row while leaving its parent active.
+	test_discarded_second_is_removed
+			-- Remove a second's final row while leaving its first active.
 		local
 			display: PB_TEST_DISPLAY
-			parent, child: PB_BAR
+			first, second: PB_BAR
 		do
 			create display.make
-			create parent.make_with_total (1)
-			parent.set_display (display)
-			parent.set_line_formatter (agent position_text)
-			create child.make_child (parent, 1)
-			child.discard_final_line
-			child.set_progress (0)
+			create first.make_with_total (1)
+			first.set_display (display)
+			first.set_line_formatter (agent position_text)
+			first.start
+			create second.make_with_total (1)
+			second.set_display (first.display)
+			second.discard_final_line
+			second.set_progress (0)
 			display.reset
-			child.set_progress (1)
-			assert_false ("policy", child.keeps_final_line)
-			assert_true ("parent repainted", display.captured.has_substring ("parent 0"))
-			assert_false ("child removed", display.captured.has_substring ("1 / 1"))
-			parent.finish
+			second.set_progress (1)
+			assert_false ("policy", second.keeps_final_line)
+			assert_true ("first repainted", display.captured.has_substring ("first 0"))
+			assert_false ("second removed", display.captured.has_substring ("1 / 1"))
+			first.finish
 		end
 
-	test_deep_hierarchy_order
-			-- Keep grandchildren directly below their ancestors in display order.
+	test_three_rows_follow_start_order
+			-- Keep three independent rows in their start order.
 		local
 			display: PB_TEST_DISPLAY
-			parent, child, grandchild: PB_BAR
-			parent_index, child_index, grandchild_index: INTEGER
+			first, second, third: PB_BAR
+			first_index, second_index, third_index: INTEGER
 		do
 			create display.make
-			create parent.make_with_total (1)
-			parent.set_display (display)
-			parent.set_line_formatter (agent position_text)
-			create child.make_child (parent, 2)
-			child.set_progress (0)
-			create grandchild.make_child (child, 3)
+			create first.make_with_total (1)
+			first.set_display (display)
+			first.set_line_formatter (agent position_text)
+			first.start
+			create second.make_with_total (2)
+			second.set_display (first.display)
+			second.set_progress (0)
+			second.start
+			create third.make_with_total (3)
+			third.set_display (second.display)
 			display.reset
-			grandchild.set_progress (0)
-			parent_index := display.captured.substring_index ("parent 0", 1)
-			child_index := display.captured.substring_index ("0 / 2", parent_index + 1)
-			grandchild_index := display.captured.substring_index ("0 / 3", child_index + 1)
-			assert_true ("depth-first order", parent_index > 0 and then child_index > parent_index and then grandchild_index > child_index)
-			assert_true ("parent sees deep descendant", parent.has_open_children)
-			grandchild.finish
-			child.finish
-			parent.finish
+			third.set_progress (0)
+			first_index := display.captured.substring_index ("first 0", 1)
+			second_index := display.captured.substring_index ("0 / 2", first_index + 1)
+			third_index := display.captured.substring_index ("0 / 3", second_index + 1)
+			assert_true ("start order", first_index > 0 and then second_index > first_index and then third_index > second_index)
+			third.finish
+			second.finish
+			first.finish
 		end
 
 feature {NONE} -- Formatting
@@ -152,7 +158,7 @@ feature {NONE} -- Formatting
 			-- Parent line showing position.
 		do
 			create Result.make (16)
-			Result.append_string_general ("parent ")
+			Result.append_string_general ("first ")
 			Result.append_integer_64 (a_progress.position)
 		end
 

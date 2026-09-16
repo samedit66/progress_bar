@@ -15,34 +15,15 @@ create {PB_DISPLAY}
 
 feature {NONE} -- Initialization
 
-	make (a_parent: detachable PB_DISPLAY_LINE)
-			-- Create a pending line below `a_parent`, if supplied.
+	make
+			-- Create an open line with no rendered text.
 		do
-			parent := a_parent
 		end
 
-feature {PB_DISPLAY, PB_DISPLAY_LINE} -- Access
-
-	parent: detachable PB_DISPLAY_LINE
-			-- Parent line in the display hierarchy, if any.
+feature {PB_DISPLAY} -- Access
 
 	text: detachable STRING_32
 			-- Most recently rendered text, if Current has become visible.
-
-feature {PB_DISPLAY, PB_BAR} -- Lifecycle owner
-
-	bar: detachable PB_BAR
-			-- Bar to stop when an ancestor finishes; released on close.
-
-feature {PB_BAR} -- Lifecycle setup
-
-	set_bar (a_bar: PB_BAR)
-		require
-			open: not is_closed
-			unowned: bar = Void
-		do
-			bar := a_bar
-		end
 
 feature {PB_DISPLAY, PB_BAR} -- Status report
 
@@ -57,24 +38,6 @@ feature {PB_DISPLAY, PB_BAR} -- Status report
 
 	keeps_final_line: BOOLEAN
 			-- Should the closed line remain visible until the display becomes idle?
-
-	is_descendant_of (a_line: PB_DISPLAY_LINE): BOOLEAN
-			-- Is Current nested below `a_line`?
-		local
-			candidate: detachable PB_DISPLAY_LINE
-		do
-			from
-				candidate := parent
-			until
-				Result or else not attached candidate as attached_candidate
-			loop
-				if attached_candidate = a_line then
-					Result := True
-				else
-					candidate := attached_candidate.parent
-				end
-			end
-		end
 
 feature {PB_DISPLAY} -- Element change
 
@@ -96,7 +59,6 @@ feature {PB_DISPLAY} -- Element change
 			text := a_text.twin
 			keeps_final_line := a_keep_final_line
 			is_closed := True
-			bar := Void
 		ensure
 			closed: is_closed
 			policy_set: keeps_final_line = a_keep_final_line

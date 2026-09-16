@@ -12,8 +12,7 @@ class PB_BAR
 create
 
 	make_with_total,
-	make_unknown,
-	make_child
+	make_unknown
 
 feature {NONE} -- Initialization
 
@@ -34,35 +33,6 @@ feature {NONE} -- Initialization
 			initialize (False, 0)
 		ensure
 			total_unknown: not has_total
-		end
-
-	make_child (a_parent: PB_BAR; a_total: INTEGER_64)
-			-- Create an explicitly owned child; start a nonempty child's parent.
-			-- Unlike sharing a display, this makes parent completion close the child.
-		require
-			parent_not_finished: not a_parent.is_finished
-			total_non_negative: a_total >= 0
-		local
-			line: PB_DISPLAY_LINE
-		do
-			initialize (True, a_total)
-			display := a_parent.display
-			is_child := True
-			if a_total > 0 then
-				a_parent.start
-				if attached a_parent.display_line as parent_line then
-					line := display.new_child_line (parent_line)
-					display_line := line
-					line.set_bar (Current)
-				end
-			end
-		ensure
-			parent_started: a_total > 0 implies a_parent.is_started
-			parent_progress_unchanged: a_parent.progress = old a_parent.progress
-			display_shared: display = a_parent.display
-			child_not_started: not is_started
-			child_completion: is_finished = (a_total = 0)
-			open_child_registered: a_total > 0 implies a_parent.has_open_children
 		end
 
 	initialize (a_has_total: BOOLEAN; a_total: INTEGER_64)
@@ -95,9 +65,6 @@ feature -- Access
 			non_negative: Result >= 0
 		end
 
-	revision: INTEGER_64
-			-- Number of accepted set_progress and pulse requests.
-
 feature -- Status report
 
 	has_total: BOOLEAN
@@ -112,35 +79,23 @@ feature -- Status report
 			Result := (has_total and then stored_total = 0) or else (attached display_line as line and then line.is_closed)
 		end
 
-	is_child: BOOLEAN
-			-- Was Current created with explicit parent ownership?
-
 	keeps_final_line: BOOLEAN
 			-- Keep the final row? Automatic until start: keep only if display is idle.
 		do
 			if has_line_policy then
 				Result := stored_keeps_final_line
 			else
-				Result := not is_child and then not display.has_open_lines
-			end
-		end
-
-	has_open_children: BOOLEAN
-			-- Does Current have a child or deeper descendant that has not finished?
-		do
-			if not is_finished and then attached display_line as line then
-				Result := display.has_open_descendants (line)
+				Result := not display.has_open_lines
 			end
 		end
 
 feature -- Configuration
 
 	set_display (a_display: PB_DISPLAY)
-			-- Share `a_display` before starting. Explicit children retain their parent's display.
+			-- Share `a_display` before starting.
 			-- A zero-total bar may also be configured; it never registers a line.
 		require
 			not_started: not is_started
-			independent: not is_child
 			unfinished_or_empty: not is_finished or else (has_total and then total = 0)
 		do
 			display := a_display
@@ -272,19 +227,15 @@ feature -- Progress
 		end
 
 	finish
-			-- Stop all open descendants, then Current, at their actual values.
+			-- Finish this operation at its actual progress; leave other bars active.
 		do
 			if not is_finished then
 				register_line
-				if attached display_line as line then
-					display.finish_descendants (line)
-				end
 				refresh (True)
 			end
 		ensure
 			finished: is_finished
 			position_unchanged: progress = old progress
-			no_open_children: not has_open_children
 		end
 
 feature -- Output
@@ -302,7 +253,7 @@ feature -- Output
 			finished_unchanged: is_finished = old is_finished
 		end
 
-feature {PB_BAR} -- Display identity
+feature {NONE} -- Display identity
 
 	display_line: detachable PB_DISPLAY_LINE
 			-- Stable line handle owned by Current.
@@ -321,7 +272,6 @@ feature {NONE} -- Rendering
 			if not attached display_line then
 				line := display.new_line
 				display_line := line
-				line.set_bar (Current)
 			end
 		end
 
@@ -349,6 +299,9 @@ feature {NONE} -- Rendering
 		end
 
 feature {NONE} -- Implementation
+
+	revision: INTEGER_64
+			-- Number of accepted refresh requests, exposed only through formatter snapshots.
 
 	has_line_policy: BOOLEAN
 			-- Has retention been explicitly configured or fixed at first rendering?

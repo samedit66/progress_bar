@@ -32,7 +32,7 @@ feature -- Test
 			bar.set_progress (4)
 			assert_true ("position", bar.progress = 4)
 			assert_true ("started", bar.is_started)
-			assert_true ("revision", bar.revision = 1)
+			assert_true ("revision", last_revision = 1)
 			assert_true ("snapshot known", attached last_progress as progress and then progress.has_total)
 			bar.finish
 			assert_true ("finished", bar.is_finished)
@@ -54,7 +54,7 @@ feature -- Test
 			bar.set_progress (7)
 			bar.pulse
 			assert_true ("position unchanged by pulse", bar.progress = 7)
-			assert_true ("revision includes pulse", bar.revision = 2)
+			assert_true ("revision includes pulse", last_revision = 2)
 			assert_true ("snapshot unknown", attached last_progress as progress and then not progress.has_total)
 			bar.finish
 			assert_true ("unknown final snapshot", attached last_progress as progress and then progress.is_final)
@@ -90,49 +90,14 @@ feature -- Test
 			bar.set_progress (3)
 			bar.put_line ("during")
 			assert_true ("position preserved", bar.progress = 3)
-			assert_true ("revision preserved", bar.revision = 1)
+			assert_true ("revision preserved", last_revision = 1)
 			assert_integers_equal ("no callback during message", 1, callback_count)
 			bar.finish
 			bar.put_line ("after")
 			assert_true ("remains finished", bar.is_finished)
 			assert_true ("final position preserved", bar.progress = 3)
-			assert_true ("final revision preserved", bar.revision = 1)
+			assert_true ("final revision preserved", last_revision = 1)
 			assert_integers_equal ("no callback after finish", 2, callback_count)
-		end
-
-	test_make_child_starts_lazy_parent_once
-			-- Start a lazy parent once when creating its first child.
-		local
-			parent, first_child, second_child: PB_BAR
-		do
-			reset_capture
-			create parent.make_with_total (2)
-			parent.set_line_formatter (agent capture)
-			create first_child.make_child (parent, 3)
-			assert_true ("parent started", parent.is_started)
-			assert_true ("parent position preserved", parent.progress = 0)
-			assert_true ("parent revision advanced", parent.revision = 1)
-			assert_integers_equal ("parent rendered once", 1, callback_count)
-			assert_true ("child shares display", first_child.display = parent.display)
-			assert_true ("child total", first_child.total = 3)
-			assert_false ("child remains configurable", first_child.is_started)
-			first_child.discard_final_line
-			create second_child.make_child (parent, 4)
-			assert_true ("parent revision unchanged", parent.revision = 1)
-			assert_integers_equal ("parent not rendered again", 1, callback_count)
-			first_child.finish
-			second_child.finish
-			parent.finish
-		end
-
-	test_finished_parent_rejects_make_child
-			-- Reject child creation after the parent has finished.
-		local
-			parent: PB_BAR
-		do
-			create parent.make_with_total (1)
-			parent.finish
-			assert_exception ("finished parent", agent create_child (parent))
 		end
 
 feature -- Simplified API tests
@@ -217,7 +182,7 @@ feature -- Simplified API tests
 			bar.set_line_formatter (agent capture)
 			bar.set_progress (4)
 			bar.finish
-			old_revision := bar.revision
+			old_revision := last_revision
 			display.reset
 			bar.set_progress (0)
 			bar.forth_by (100)
@@ -228,7 +193,7 @@ feature -- Simplified API tests
 			bar.put_line ("ignored")
 			bar.finish
 			assert_true ("all commands silent", display.captured.is_empty and callback_count = 2)
-			assert_true ("closed state retained", bar.is_finished and bar.progress = 4 and bar.revision = old_revision and not bar.keeps_final_line)
+			assert_true ("closed state retained", bar.is_finished and bar.progress = 4 and last_revision = old_revision and not bar.keeps_final_line)
 		end
 
 	test_formatter_changes_apply_on_next_update
@@ -249,59 +214,9 @@ feature -- Simplified API tests
 			bar.finish
 		end
 
-	test_parent_completion_stops_entire_subtree
-		local
-			parent, child, grandchild, sibling: PB_BAR
-			display: PB_TEST_DISPLAY
-		do
-			create display.make
-			create parent.make_with_total (10)
-			parent.set_display (display)
-			create child.make_child (parent, 20)
-			create grandchild.make_child (child, 30)
-			create sibling.make_with_total (5)
-			sibling.set_display (display)
-			child.set_progress (2)
-			grandchild.set_progress (3)
-			parent.set_line_formatter (agent capture)
-			child.set_line_formatter (agent capture)
-			grandchild.set_line_formatter (agent capture)
-			reset_capture
-			parent.set_progress (10)
-			assert_true ("whole subtree closed", parent.is_finished and child.is_finished and grandchild.is_finished)
-			assert_true ("actual values retained", child.progress = 2 and grandchild.progress = 3)
-			assert_true ("each final formatted once", callback_count = 3 and final_callback_count = 3)
-			assert_true ("independent sibling remains open", not sibling.is_finished)
-			display.reset
-			child.forth_by (18)
-			grandchild.finish
-			parent.finish
-			assert_true ("closed subtree silent", display.captured.is_empty)
-			sibling.forth_by (5)
-			assert_true ("display commits after sibling", display.captured.ends_with ("%N"))
-		end
-
-	test_forced_parent_finish_closes_pending_children
-		local
-			parent, child: PB_BAR
-			display: PB_TEST_DISPLAY
-		do
-			create display.make
-			create parent.make_unknown
-			parent.set_display (display)
-			create child.make_child (parent, 5)
-			child.discard_final_line
-			parent.set_progress (2)
-			parent.finish
-			assert_true ("forced close", parent.is_finished and child.is_finished)
-			assert_true ("pending actual value", child.progress = 0 and not child.is_started)
-			assert_true ("unknown actual value", parent.progress = 2)
-			assert_true ("discarded child not retained", not display.captured.has_substring ("0 / 5"))
-		end
-
 	test_zero_total_leaves_no_pending_display_line
 		local
-			bar, parent, child: PB_BAR
+			bar, next_bar: PB_BAR
 			display: PB_TEST_DISPLAY
 		do
 			reset_capture
@@ -312,12 +227,9 @@ feature -- Simplified API tests
 			bar.forth_by (1)
 			bar.finish
 			assert_true ("zero is finished and silent", bar.is_finished and display.captured.is_empty and callback_count = 0)
-			create parent.make_with_total (1)
-			parent.set_display (display)
-			create child.make_child (parent, 0)
-			assert_true ("empty child is silent", child.is_finished and not parent.is_started and display.captured.is_empty)
-			assert_false ("empty child not registered as open", parent.has_open_children)
-			parent.forth_by (1)
+			create next_bar.make_with_total (1)
+			next_bar.set_display (display)
+			next_bar.forth
 			assert_true ("no pending line prevents final newline", display.captured.ends_with ("%N"))
 		end
 
@@ -337,11 +249,11 @@ feature -- Pulse equivalence
 			advanced.set_display (advance_display)
 			pulsed.pulse
 			advanced.forth_by (0)
-			assert_true ("first pulse starts without progress", pulsed.is_started and pulsed.progress = 0 and pulsed.revision = 1)
+			assert_true ("first pulse starts without progress", pulsed.is_started and pulsed.progress = 0)
 			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
 			pulsed.pulse
 			advanced.forth_by (0)
-			assert_true ("second pulse increments revision", pulsed.revision = 2)
+			assert_true ("second pulse changes spinner", pulse_display.captured.has_substring ("-  0"))
 			assert_same_pulse_state (pulsed, advanced, pulse_display, advance_display)
 			pulsed.set_progress ({INTEGER_64}.max_value)
 			advanced.set_progress ({INTEGER_64}.max_value)
@@ -365,19 +277,23 @@ feature -- Pulse equivalence
 			bar: PB_BAR
 			display: PB_TEST_DISPLAY
 		do
+			reset_capture
 			create display.make
 			create bar.make_with_total (1)
 			bar.set_display (display)
+			bar.set_line_formatter (agent capture)
 			assert_exception ("active known pulse rejected", agent bar.pulse)
-			assert_true ("rejected pulse unchanged", bar.progress = 0 and bar.revision = 0 and display.captured.is_empty)
+			assert_true ("rejected pulse unchanged", bar.progress = 0 and last_revision = 0 and display.captured.is_empty)
 			bar.forth_by (1)
 			display.reset
 			bar.pulse
-			assert_true ("known finished pulse ignored", bar.is_finished and bar.revision = 1 and display.captured.is_empty)
+			assert_true ("known finished pulse ignored", bar.is_finished and last_revision = 1 and display.captured.is_empty)
+			reset_capture
 			create bar.make_with_total (0)
 			bar.set_display (display)
+			bar.set_line_formatter (agent capture)
 			bar.pulse
-			assert_true ("zero total pulse ignored", bar.is_finished and bar.revision = 0 and display.captured.is_empty)
+			assert_true ("zero total pulse ignored", bar.is_finished and last_revision = 0 and display.captured.is_empty)
 		end
 
 feature {NONE} -- Equivalence assertions
@@ -386,12 +302,19 @@ feature {NONE} -- Equivalence assertions
 			-- Compare public state and the complete emitted terminal sequence.
 		do
 			assert_true ("same position", pulsed.progress = advanced.progress)
-			assert_true ("same revision", pulsed.revision = advanced.revision)
 			assert_true ("same lifecycle", pulsed.is_started = advanced.is_started and pulsed.is_finished = advanced.is_finished)
 			assert_true ("same output", pulse_display.captured.same_string (advance_display.captured))
 		end
 
 feature {NONE} -- Capture
+
+	last_revision: INTEGER_64
+			-- Last revision received through the public formatter contract.
+		do
+			if attached last_progress as snapshot then
+				Result := snapshot.revision
+			end
+		end
 
 	last_progress: detachable PB_PROGRESS
 			-- Most recent progress passed to a formatter.
@@ -430,14 +353,6 @@ feature {NONE} -- Capture
 			end
 			callback_count := callback_count + 1
 			Result := "same"
-		end
-
-	create_child (a_parent: PB_BAR)
-			-- Attempt to create a child of `a_parent`.
-		local
-			child: PB_BAR
-		do
-			create child.make_child (a_parent, 1)
 		end
 
 end

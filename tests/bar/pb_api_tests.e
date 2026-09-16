@@ -27,10 +27,10 @@ feature -- Manual lifecycle
 			bar.set_display (display)
 			assert_true ("construction has no row", display.registered_line_count = 0 and display.captured.is_empty)
 			bar.start
-			assert_true ("start renders zero", bar.progress = 0 and bar.revision = 1 and display.registered_line_count = 1)
+			assert_true ("start renders zero", bar.progress = 0 and display.registered_line_count = 1)
 			display.reset
 			bar.start
-			assert_true ("repeat start is silent", display.captured.is_empty and bar.revision = 1)
+			assert_true ("repeat start is silent", display.captured.is_empty)
 			bar.forth
 			assert_true ("one completed step", bar.progress = 1 and not bar.is_finished)
 			bar.forth

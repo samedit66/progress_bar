@@ -37,57 +37,13 @@ feature -- Output
 
 feature {PB_BAR} -- Line lifecycle
 
-	finish_descendants (a_line: PB_DISPLAY_LINE)
-			-- Finish the contiguous subtree in reverse display order.
-		require
-			registered: is_registered (a_line)
-			open: not a_line.is_closed
-		local
-			index: INTEGER
-		do
-			from
-				index := subtree_end_index (a_line) - 1
-			until
-				lines.i_th (index) = a_line
-			loop
-				if attached lines.i_th (index).bar as child then
-					child.finish
-				end
-				index := index - 1
-			end
-		ensure
-			no_open_descendants: not has_open_descendants (a_line)
-		end
-
 	new_line: PB_DISPLAY_LINE
-			-- New pending top-level line at the bottom of Current.
+			-- New pending line at the bottom of Current.
 		do
-			create Result.make (Void)
+			create Result.make
 			lines.extend (Result)
 		ensure
 			registered: lines.has (Result)
-			open: not Result.is_closed
-		end
-
-	new_child_line (a_parent: PB_DISPLAY_LINE): PB_DISPLAY_LINE
-			-- New pending line immediately after all descendants of `a_parent`.
-		require
-			parent_registered: is_registered (a_parent)
-			parent_open: not a_parent.is_closed
-		local
-			index: INTEGER
-		do
-			create Result.make (a_parent)
-			index := subtree_end_index (a_parent)
-			if index > lines.count then
-				lines.extend (Result)
-			else
-				lines.go_i_th (index)
-				lines.put_left (Result)
-			end
-		ensure
-			registered: lines.has (Result)
-			parent_set: Result.parent = a_parent
 			open: not Result.is_closed
 		end
 
@@ -132,7 +88,6 @@ feature {PB_BAR} -- Line lifecycle
 		require
 			registered: is_registered (a_line)
 			open: not a_line.is_closed
-			no_open_descendants: not has_open_descendants (a_line)
 			single_line: is_single_line (a_text)
 		local
 			old_visible_count: INTEGER
@@ -161,25 +116,6 @@ feature {PB_BAR} -- Line lifecycle
 			policy_set: a_line.keeps_final_line = a_keep_final_line
 		end
 
-	has_open_descendants (a_line: PB_DISPLAY_LINE): BOOLEAN
-			-- Does `a_line` have a registered descendant that has not finished?
-		require
-			registered: is_registered (a_line)
-		local
-			candidate: PB_DISPLAY_LINE
-		do
-			across
-				lines
-			as
-				line_cursor
-			until
-				Result
-			loop
-				candidate := line_cursor
-				Result := not candidate.is_closed and then candidate.is_descendant_of (a_line)
-			end
-		end
-
 	is_registered (a_line: PB_DISPLAY_LINE): BOOLEAN
 			-- Is `a_line` currently owned by Current?
 		do
@@ -202,25 +138,6 @@ feature {PB_BAR} -- Line lifecycle
 				Result := character /= '%N' and then character /= '%R'
 				index := index + 1
 			end
-		end
-
-feature {NONE} -- Hierarchy
-
-	subtree_end_index (a_line: PB_DISPLAY_LINE): INTEGER
-			-- Index immediately after `a_line` and its contiguous descendants.
-		require
-			registered: is_registered (a_line)
-		do
-			from
-				Result := lines.index_of (a_line, 1) + 1
-			until
-				Result > lines.count or else not lines.i_th (Result).is_descendant_of (a_line)
-			loop
-				Result := Result + 1
-			end
-		ensure
-			after_parent: Result > lines.index_of (a_line, 1)
-			within_boundary: Result <= lines.count + 1
 		end
 
 feature {NONE} -- Rendering
@@ -302,7 +219,7 @@ feature {NONE} -- Output
 feature {NONE} -- Implementation
 
 	lines: ARRAYED_LIST [PB_DISPLAY_LINE]
-			-- Registered lines in stable hierarchy order.
+			-- Registered lines in registration order.
 
 	renderer: PB_TERMINAL_RENDERER
 			-- Terminal control-sequence builder.

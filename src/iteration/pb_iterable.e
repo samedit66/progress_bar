@@ -59,7 +59,7 @@ feature -- Access
 			Result := cursor
 		end
 
-feature -- Status report
+feature {NONE} -- Retention configuration
 
 	has_line_policy: BOOLEAN
 			-- Has final-line retention been explicitly chosen for future cursors?

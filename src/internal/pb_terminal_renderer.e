@@ -9,7 +9,7 @@ note
 
 class PB_TERMINAL_RENDERER
 
-feature -- Multiline conversion
+feature {PB_DISPLAY} -- Multiline conversion
 
 	redraw_line_sequence (a_line: READABLE_STRING_GENERAL; a_previous_count, a_rows_below: INTEGER): STRING_32
 			-- Sequence replacing one managed row and returning to the bottom row.
@@ -57,6 +57,8 @@ feature -- Multiline conversion
 			end
 		end
 
+feature {NONE} -- Frame implementation
+
 	commit_frame_sequence (a_previous_line_count: INTEGER; a_lines: ARRAYED_LIST [STRING_32]): STRING_32
 			-- Sequence replacing a managed frame and committing its remaining rows.
 		require
@@ -67,6 +69,8 @@ feature -- Multiline conversion
 				Result.append_character ('%N')
 			end
 		end
+
+feature {PB_DISPLAY} -- Messages
 
 	message_frame_sequence (a_message: READABLE_STRING_GENERAL; a_previous_line_count: INTEGER; a_lines: ARRAYED_LIST [STRING_32]): STRING_32
 			-- Sequence writing `a_message` above a managed multiline frame.
@@ -84,7 +88,7 @@ feature -- Multiline conversion
 			end
 		end
 
-feature -- Conversion
+feature {NONE} -- Single-line implementation
 
 	redraw_sequence (a_line: READABLE_STRING_GENERAL; a_previous_count: INTEGER): STRING_32
 			-- Sequence that replaces a line of `a_previous_count` characters with `a_line`.
