@@ -38,13 +38,24 @@ feature -- Access
 	new_cursor: ITERATION_CURSOR [G]
 			-- Fresh progress-reporting cursor over `source`.
 		local
+			bar: PB_BAR
 			cursor: PB_ITERATION_CURSOR [G]
 		do
 			if attached {FINITE [G]} source as finite then
-				create cursor.make_known (source.new_cursor, finite.count.to_integer_64, formatter, display, has_line_policy, keeps_final_line)
+				create bar.make_with_total (finite.count.to_integer_64)
 			else
-				create cursor.make_unknown (source.new_cursor, formatter, display, has_line_policy, keeps_final_line)
+				create bar.make_unknown
 			end
+			bar.set_display (display)
+			bar.set_line_formatter (formatter)
+			if has_line_policy then
+				if keeps_final_line then
+					bar.keep_final_line
+				else
+					bar.discard_final_line
+				end
+			end
+			create cursor.make (source.new_cursor, bar)
 			Result := cursor
 		end
 

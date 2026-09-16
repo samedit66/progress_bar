@@ -15,42 +15,18 @@ inherit
 
 create {PB_ITERABLE}
 
-	make_known,
-	make_unknown
+	make
 
 feature {NONE} -- Initialization
 
-	make_known (a_source_cursor: ITERATION_CURSOR [G]; a_total: INTEGER_64; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_has_line_policy, a_keep_final_line: BOOLEAN)
-			-- Create a cursor with a known `a_total` in `a_display`.
+	make (a_source_cursor: ITERATION_CURSOR [G]; a_bar: PB_BAR)
+			-- Take the traversal's configured bar and start reporting progress.
 		require
-			total_non_negative: a_total >= 0
+			bar_not_started: not a_bar.is_started
+			zero_progress: a_bar.progress = 0
 		do
 			source_cursor := a_source_cursor
-			create bar.make_with_total (a_total)
-			bar.set_display (a_display)
-			configure_and_start (a_formatter, a_has_line_policy, a_keep_final_line)
-		end
-
-	make_unknown (a_source_cursor: ITERATION_CURSOR [G]; a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_display: PB_DISPLAY; a_has_line_policy, a_keep_final_line: BOOLEAN)
-			-- Create a cursor whose total is unknown in `a_display`.
-		do
-			source_cursor := a_source_cursor
-			create bar.make_unknown
-			bar.set_display (a_display)
-			configure_and_start (a_formatter, a_has_line_policy, a_keep_final_line)
-		end
-
-	configure_and_start (a_formatter: FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]; a_has_line_policy, a_keep_final_line: BOOLEAN)
-			-- Configure presentation before the first update, then close an empty source.
-		do
-			bar.set_line_formatter (a_formatter)
-			if a_has_line_policy then
-				if a_keep_final_line then
-					bar.keep_final_line
-				else
-					bar.discard_final_line
-				end
-			end
+			bar := a_bar
 			bar.start
 			finish_if_exhausted
 		ensure
