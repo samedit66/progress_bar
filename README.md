@@ -13,7 +13,7 @@ standard error and support for EiffelStudio and Gobo.
 
 ## Quick start
 
-Use `PB_BAR` to report completed work:
+Use `PB_BAR` to report completed work with manual progress updates:
 
 ```eiffel
 local
@@ -28,12 +28,57 @@ end
 ```
 
 Replace `do_work` with your operation. Reaching the total finishes the bar.
-Use `PB_ITERABLE [G]` to wrap an existing source or `PB_STEP_BAR` for numbered steps.
 
-The [quick-start application](examples/quick_start/application.e) contains complete
-examples of manual updates, unknown totals, iteration, and nested bars. Run it with
-`make gobo` or `make ise` from the repository root with the corresponding toolchain
-installed; its ECF already connects the library.
+Use `PB_ITERABLE [G]`, inspired by Python's [tqdm](https://github.com/tqdm/tqdm),
+to wrap an existing iterable:
+
+```eiffel
+local
+    bar: PB_ITERABLE [STRING]
+    items: ARRAY [STRING]
+do
+    items := << "this", "and that", "and also that" >>
+    create bar.make_over (items)
+
+    across bar as item loop
+        do_work (item) -- `item` is a string from `items`.
+    end
+end
+```
+
+Use `PB_STEP_BAR` to iterate over numbered steps with automatic progress updates:
+
+```eiffel
+local
+    bar: PB_STEP_BAR
+do
+    create bar.make_with_total (100)
+
+    across bar as step loop
+        do_work (step) -- `step` is an integer from 1 to 100.
+    end
+end
+```
+
+To show several progress bars at once, share a `PB_DISPLAY` between them:
+
+```eiffel
+local
+    outer_bar: PB_STEP_BAR
+    inner_bar: PB_STEP_BAR
+do
+    create outer_bar.make_with_total (100)
+
+    across outer_bar as outer_step loop
+        create inner_bar.make_with_total (20)
+        inner_bar.set_display (outer_bar.display) -- Share the outer bar's display.
+
+        across inner_bar as inner_step loop
+            -- ...
+        end
+    end
+end
+```
 
 ## Public API at a glance
 
