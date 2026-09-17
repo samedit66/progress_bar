@@ -94,8 +94,8 @@ provides built-in agents through class features such as
 `{PB_FORMATTERS}.basic_formatter`. No factory object is needed. Inherit
 `PB_FORMATTERS` for short calls such as `basic_formatter`; the
 [quick-start application](examples/quick_start/application.e) demonstrates this.
-See [formatter usage and migration](docs/formatters.md) for the breaking rename
-from `basic`, `standard`, and the other old factory names.
+See [formatter usage](docs/formatters.md) for built-in formatters, inheritance,
+and custom formatter agents.
 
 ## Installation and documentation
 

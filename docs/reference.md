@@ -143,7 +143,7 @@ completed work or output. No automatic retry or exception-swallowing is added.
 
 ## Formatter types
 
-[`PB_PROGRESS`](../src/progress/pb_progress.e) remains an immutable snapshot with
+[`PB_PROGRESS`](../src/progress/pb_progress.e) is an immutable snapshot with
 `position`, `revision`, `has_total`, guarded `total`, `fraction`, `percentage`,
 `is_complete`, and `is_final`. Snapshot `position` corresponds to `PB_BAR.progress`. The snapshot
 `revision` counts accepted progress updates, including initial start and pulses;
@@ -162,5 +162,5 @@ Built-ins are class features: `basic_formatter`,
 `standard_formatter (label, unit, post_label)`, `unicode_formatter`,
 `compact_formatter`, `counter_formatter`, and `minimal_formatter`. Call them
 through `{PB_FORMATTERS}` or inherit `PB_FORMATTERS` for unqualified calls.
-Formatting helpers are not inherited. See [formatters](formatters.md) for naming,
-inheritance, and migration from the removed factory names.
+Formatting helpers are not inherited. See [formatters](formatters.md) for built-in
+formatters, inheritance, and custom formatter agents.

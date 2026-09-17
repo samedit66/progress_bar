@@ -77,15 +77,6 @@ application object that calls an inherited factory. Fixed factories cache their
 agents with `once`; agent identity is not part of the API contract. Each
 `standard_formatter` call owns copies of its affixes, independent of other calls.
 
-### Breaking API migration
-
-Replace `formatters.basic` with `{PB_FORMATTERS}.basic_formatter`, and likewise
-append `_formatter` to `unicode`, `compact`, `counter`, and `minimal`.
-Replace `formatters.standard (...)` with
-`{PB_FORMATTERS}.standard_formatter (...)`. Remove the `formatters` local and
-`create formatters`. When inheriting `PB_FORMATTERS`, omit the class qualifier.
-The old names are removed, with no compatibility aliases.
-
 ## Pure formatter algorithm
 
 A pure formatter can be implemented with this sequence:
