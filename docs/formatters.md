@@ -1,4 +1,4 @@
-# Custom formatters
+# Formatters
 
 A formatter is an Eiffel function agent from one immutable `PB_PROGRESS`
 snapshot to display text:
@@ -13,6 +13,78 @@ FUNCTION [
 No formatter base class is required. A routine agent is enough for local
 presentation, while a dedicated object can retain state for measurements that
 span updates.
+
+## Built-in formatters
+
+Use class features directly; no `PB_FORMATTERS` object is required:
+
+```eiffel
+bar.set_line_formatter ({PB_FORMATTERS}.basic_formatter)
+bar.set_line_formatter (
+    {PB_FORMATTERS}.standard_formatter ("Compiling", "classes", "ready")
+)
+```
+
+| Feature | Presentation |
+| --- | --- |
+| `basic_formatter` | ASCII bar, percentage, counter, and spinner |
+| `unicode_formatter` | Unicode block bar and braille spinner |
+| `compact_formatter` | Percentage and counter, without a bar |
+| `counter_formatter` | Position and optional total |
+| `minimal_formatter` | Percentage for known progress; spinner for unknown progress |
+| `standard_formatter (label, unit, post_label)` | ASCII presentation with copied affixes |
+
+For short calls, inherit the factories:
+
+```eiffel
+class APPLICATION
+
+inherit
+    PB_FORMATTERS
+        rename
+            counter_formatter as progress_counter_formatter
+        export
+            {NONE} all
+        end
+
+create
+    make
+
+feature {NONE} -- Initialization
+
+    make
+        local
+            bar: PB_BAR
+        do
+            create bar.make_with_total (100)
+            bar.set_line_formatter (progress_counter_formatter)
+            bar.set_progress (25)
+            bar.finish
+        end
+
+end
+```
+
+The `*_formatter` suffix avoids common names such as `counter`. Use `rename`
+for remaining conflicts. `export {NONE} all` keeps these features out of the
+application's public interface; it does not resolve name conflicts inside it.
+Formatting helpers belong to a separate internal class and are not inherited.
+
+Inheritance provides access to built-in factories. Custom behavior remains an
+ordinary formatter agent; there are no inherited algorithm hooks to override.
+Built-in agents use a private stateless implementation object, never the
+application object that calls an inherited factory. Fixed factories cache their
+agents with `once`; agent identity is not part of the API contract. Each
+`standard_formatter` call owns copies of its affixes, independent of other calls.
+
+### Breaking API migration
+
+Replace `formatters.basic` with `{PB_FORMATTERS}.basic_formatter`, and likewise
+append `_formatter` to `unicode`, `compact`, `counter`, and `minimal`.
+Replace `formatters.standard (...)` with
+`{PB_FORMATTERS}.standard_formatter (...)`. Remove the `formatters` local and
+`create formatters`. When inheriting `PB_FORMATTERS`, omit the class qualifier.
+The old names are removed, with no compatibility aliases.
 
 ## Pure formatter algorithm
 
@@ -87,7 +159,7 @@ bar.set_line_formatter (agent formatter.format)
 ```
 
 Copy caller-owned strings in `make` when later external mutation must not alter
-the output. This is the same ownership rule used by `PB_FORMATTERS.standard`.
+the output. This is the same ownership rule used by `PB_FORMATTERS.standard_formatter`.
 
 ## Stateful formatter algorithm
 

@@ -21,13 +21,10 @@ feature {NONE} -- Initialization
 
 	make_over (a_source: ITERABLE [G])
 			-- Decorate `a_source`; every traversal gets fresh progress on a private display.
-		local
-			formatters: PB_FORMATTERS
 		do
 			create display.make
 			source := a_source
-			create formatters
-			formatter := formatters.basic
+			formatter := {PB_FORMATTERS}.basic_formatter
 		end
 
 feature -- Access

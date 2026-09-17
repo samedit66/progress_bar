@@ -176,16 +176,17 @@ operations on its display active.
 
 ```eiffel
 local
-    formatters: PB_FORMATTERS
+    bar: PB_BAR
 do
-    create formatters
     create bar.make_with_total (100)
-    bar.set_line_formatter (formatters.standard ("Compiling", "classes", "ready"))
+    bar.set_line_formatter ({PB_FORMATTERS}.standard_formatter ("Compiling", "classes", "ready"))
     bar.start
 end
 ```
 
-Built-ins include `basic`, `unicode`, `compact`, `counter`, and `minimal`.
+Built-ins are class features: `basic_formatter`, `unicode_formatter`,
+`compact_formatter`, `counter_formatter`, and `minimal_formatter`.
+No formatter factory object is required.
 The setter itself is silent; a manual bar uses the formatter on its next refresh.
 Iterable cursors copy their formatter when created. See [custom formatters](formatters.md).
 

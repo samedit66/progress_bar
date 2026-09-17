@@ -158,5 +158,9 @@ FUNCTION [TUPLE [progress: PB_PROGRESS], READABLE_STRING_GENERAL]
 
 A formatter returns one physical line without carriage returns or newlines. The
 renderer copies it, so the formatter may reuse its buffer after returning.
-Built-ins are `basic`, `standard (label, unit, post_label)`, `unicode`, `compact`,
-`counter`, and `minimal`. See [custom formatters](formatters.md).
+Built-ins are class features: `basic_formatter`,
+`standard_formatter (label, unit, post_label)`, `unicode_formatter`,
+`compact_formatter`, `counter_formatter`, and `minimal_formatter`. Call them
+through `{PB_FORMATTERS}` or inherit `PB_FORMATTERS` for unqualified calls.
+Formatting helpers are not inherited. See [formatters](formatters.md) for naming,
+inheritance, and migration from the removed factory names.

@@ -37,14 +37,11 @@ feature {NONE} -- Initialization
 
 	initialize (a_has_total: BOOLEAN; a_total: INTEGER_64)
 			-- Establish configuration without registering a terminal line.
-		local
-			formatters: PB_FORMATTERS
 		do
 			create display.make
 			has_total := a_has_total
 			stored_total := a_total
-			create formatters
-			formatter := formatters.basic
+			formatter := {PB_FORMATTERS}.basic_formatter
 		end
 
 feature -- Access

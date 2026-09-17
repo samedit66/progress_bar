@@ -34,7 +34,6 @@ feature {NONE} -- Initialization
             -- Run complete examples of the public API.
         local
             bar: PB_BAR
-            formatters: PB_FORMATTERS
             items: ARRAYED_LIST [STRING]
             progress: PB_ITERABLE [STRING]
             files, parts: PB_STEP_BAR
@@ -61,9 +60,8 @@ feature {NONE} -- Initialization
 
             -- 3. Absolute progress: early finish preserves the actual value, 40/100.
             -- Optional custom formatting adds a label.
-            create formatters
             create bar.make_with_total (100)
-            bar.set_line_formatter (formatters.standard ("Stopped early", "items", ""))
+            bar.set_line_formatter ({PB_FORMATTERS}.standard_formatter ("Stopped early", "items", ""))
             bar.set_progress (40)
             bar.finish
 
@@ -73,7 +71,7 @@ feature {NONE} -- Initialization
             items.extend ("analyze")
             items.extend ("emit")
             create progress.make_over (items)
-            progress.set_line_formatter (formatters.standard ("Pipeline", "stages", "done"))
+            progress.set_line_formatter ({PB_FORMATTERS}.standard_formatter ("Pipeline", "stages", "done"))
             across
                 progress
             as
@@ -85,10 +83,10 @@ feature {NONE} -- Initialization
             -- 5. Numbered steps: share a display for nested loops.
             -- Each inner traversal gets a fresh row, removed when it finishes.
             create files.make_with_total (3)
-            files.set_line_formatter (formatters.standard ("Files", "files", "done"))
+            files.set_line_formatter ({PB_FORMATTERS}.standard_formatter ("Files", "files", "done"))
             create parts.make_with_total (2)
             parts.set_display (files.display)
-            parts.set_line_formatter (formatters.standard ("  Parts", "parts", "done"))
+            parts.set_line_formatter ({PB_FORMATTERS}.standard_formatter ("  Parts", "parts", "done"))
             across
                 files
             as
@@ -128,7 +126,12 @@ These small examples finish immediately; real work belongs before each manual
 | All three | `display`, `set_display`, `set_line_formatter`, `keep_final_line`, `discard_final_line`, `put_line` |
 
 Formatter agents receive an immutable `PB_PROGRESS` snapshot; `PB_FORMATTERS`
-provides built-in agents. See the linked class sources and reference below for contracts.
+provides built-in agents through class features such as
+`{PB_FORMATTERS}.basic_formatter`. No factory object is needed. Inherit
+`PB_FORMATTERS` for short calls such as `basic_formatter`; the
+[quick-start application](examples/quick_start/application.e) demonstrates this.
+See [formatter usage and migration](docs/formatters.md) for the breaking rename
+from `basic`, `standard`, and the other old factory names.
 
 ## Installation and documentation
 

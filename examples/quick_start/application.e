@@ -9,6 +9,11 @@ note
 
 class APPLICATION
 
+inherit
+
+	PB_FORMATTERS
+		export {NONE} all end
+
 create
 
 	make
@@ -19,15 +24,13 @@ feature {NONE} -- Initialization
 			-- Run complete examples of the public API.
 		local
 			bar: PB_BAR
-			formatters: PB_FORMATTERS
 			items: ARRAYED_LIST [STRING]
 			progress: PB_ITERABLE [STRING]
 			files, parts: PB_STEP_BAR
 			processed_parts: INTEGER
 		do
-			create formatters
 			create bar.make_with_total (10)
-			bar.set_line_formatter (formatters.standard ("Manual", "steps", "done"))
+			bar.set_line_formatter (standard_formatter ("Manual", "steps", "done"))
 			from
 				bar.start
 			until
@@ -36,13 +39,13 @@ feature {NONE} -- Initialization
 				bar.forth
 			end
 			create bar.make_unknown
-			bar.set_line_formatter (formatters.standard ("Unknown", "items", "done"))
+			bar.set_line_formatter (standard_formatter ("Unknown", "items", "done"))
 			bar.start
 			bar.forth_by (4)
 			bar.pulse
 			bar.finish
 			create bar.make_with_total (100)
-			bar.set_line_formatter (formatters.standard ("Stopped early", "items", ""))
+			bar.set_line_formatter (standard_formatter ("Stopped early", "items", ""))
 			bar.set_progress (40)
 			bar.finish
 			create items.make (3)
@@ -50,7 +53,7 @@ feature {NONE} -- Initialization
 			items.extend ("analyze")
 			items.extend ("emit")
 			create progress.make_over (items)
-			progress.set_line_formatter (formatters.standard ("Pipeline", "stages", "done"))
+			progress.set_line_formatter (standard_formatter ("Pipeline", "stages", "done"))
 			across
 				progress
 			as
@@ -59,10 +62,10 @@ feature {NONE} -- Initialization
 				progress.put_line ("Processed " + item)
 			end
 			create files.make_with_total (3)
-			files.set_line_formatter (formatters.standard ("Files", "files", "done"))
+			files.set_line_formatter (standard_formatter ("Files", "files", "done"))
 			create parts.make_with_total (2)
 			parts.set_display (files.display)
-			parts.set_line_formatter (formatters.standard ("  Parts", "parts", "done"))
+			parts.set_line_formatter (standard_formatter ("  Parts", "parts", "done"))
 			across
 				files
 			as
