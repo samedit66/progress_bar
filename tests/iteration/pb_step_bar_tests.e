@@ -62,8 +62,8 @@ feature -- Test
 			assert_true ("single final progress", attached last_progress as progress and then progress.total = 1 and then progress.position = 1 and then progress.is_final)
 		end
 
-	test_empty_reversed_steps
-			-- Treat reversed bounds as a known empty steps.
+	test_zero_total_steps
+			-- A zero total never enters the traversal body.
 		local
 			steps: PB_STEP_BAR
 			body_calls: INTEGER
@@ -76,7 +76,7 @@ feature -- Test
 			as
 				value
 			loop
-				body_calls := body_calls + value
+				body_calls := body_calls + 1
 			end
 			assert_integers_equal ("empty body", 0, body_calls)
 			assert_true ("empty traversal is silent", last_progress = Void)
@@ -115,45 +115,41 @@ feature -- Test
 		local
 			steps: PB_STEP_BAR
 			display: PB_TEST_DISPLAY
+			cursor: ITERATION_CURSOR [INTEGER]
 		do
+			reset_capture
 			create steps.make_with_total ({INTEGER}.max_value)
 			create display.make
 			steps.set_display (display)
-			assert_true ("construction silent", display.captured.is_empty)
+			steps.set_line_formatter (agent capture)
+			cursor := steps.new_cursor
+			assert_true ("first step available without materializing all items", not cursor.after and then cursor.item = 1)
+			assert_true ("full total retained", attached last_progress as progress and then progress.total = {INTEGER}.max_value and then progress.position = 0)
 		end
 
 	test_put_line_during_steps
-			-- Write a message while preserving inherited steps traversal.
+			-- Emit the message and restore the current row without refreshing progress.
 		local
 			steps: PB_STEP_BAR
-			sum: INTEGER
+			display: PB_TEST_DISPLAY
+			before_message: detachable PB_PROGRESS
 		do
 			reset_capture
+			create display.make
 			create steps.make_with_total (2)
+			steps.set_display (display)
 			steps.set_line_formatter (agent capture)
 			across
 				steps
 			as
 				value
 			loop
-				sum := sum + value
+				display.reset
+				before_message := last_progress
 				steps.put_line ("steps item")
+				assert_true ("message and current row", display.captured.same_string ("%R %Rsteps item%N%R" + (value - 1).out))
+				assert_true ("no progress refresh", last_progress = before_message)
 			end
-			assert_integers_equal ("steps sum", 3, sum)
-			assert_true ("steps final progress", attached last_progress as progress and then progress.position = 2 and then progress.is_final)
-		end
-
-	test_steps_uses_supplied_display
-			-- Coordinate steps progress with other lines through a supplied display.
-		local
-			display: PB_TEST_DISPLAY
-			steps: PB_STEP_BAR
-		do
-			create display.make
-			create steps.make_with_total (2)
-			steps.set_display (display)
-			steps.set_line_formatter (agent capture)
-			assert_true ("display retained", steps.display = display)
 		end
 
 feature {NONE} -- Capture

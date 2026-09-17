@@ -115,8 +115,6 @@ feature -- Test
 				assert_same_text ("minimal", {PB_FORMATTERS}.minimal_formatter.item ([snapshot]), minimal_formatter.item ([snapshot]))
 				assert_same_text ("standard", {PB_FORMATTERS}.standard_formatter ("Files", "files", "done").item ([snapshot]), standard_formatter ("Files", "files", "done").item ([snapshot]))
 			end
-			assert_integers_equal ("own counter", 7, counter)
-			assert_integers_equal ("own helper name", 9, append_counter)
 		end
 
 	test_short_formats

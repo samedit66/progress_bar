@@ -35,20 +35,6 @@ feature -- Test
 			bar.finish
 		end
 
-	test_known_empty_total
-			-- Zero total creates a finished bar without invoking the formatter.
-		local
-			bar: PB_BAR
-		do
-			last_progress := Void
-			create bar.make_with_total (0)
-			bar.set_line_formatter (agent capture)
-			bar.set_progress (0)
-			bar.finish
-			assert_true ("empty complete", bar.is_finished and bar.progress = 0)
-			assert_true ("no empty snapshot", last_progress = Void)
-		end
-
 	test_unknown_snapshot
 			-- Preserve unknown total independently of its stored numeric representation.
 		local

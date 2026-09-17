@@ -75,7 +75,7 @@ feature -- Access
 		require
 			total_known: has_total
 		do
-			if stored_total = 0 or else position >= stored_total then
+			if position >= stored_total then
 				Result := 1.0
 			else
 				Result := position.to_double / stored_total.to_double

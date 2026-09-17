@@ -89,7 +89,7 @@ feature -- Test
 			as
 				value
 			loop
-				body_calls := body_calls + value
+				body_calls := body_calls + 1
 			end
 			assert_integers_equal ("body not entered", 0, body_calls)
 			assert_true ("empty traversal is silent", last_progress = Void)

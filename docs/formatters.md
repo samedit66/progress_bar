@@ -123,44 +123,6 @@ create bar.make_unknown
 bar.set_line_formatter (agent format_files)
 ```
 
-## Configured formatter object
-
-When several bars share configuration, store that configuration in a normal
-class and expose a formatting routine:
-
-```eiffel
-class MY_PROGRESS_FORMATTER
-
-create
-    make
-
-feature -- Formatting
-
-    format (a_progress: PB_PROGRESS): STRING_32
-            -- Render `a_progress` using Current's configuration.
-        do
-            -- Append label, bar, counter, and unit.
-        end
-
-feature {NONE} -- Implementation
-
-    label: STRING_32
-    unit: STRING_32
-
-end
-```
-
-Then pass the closed agent:
-
-```eiffel
-create formatter.make ("Indexing", "documents")
-create bar.make_with_total (documents.count)
-bar.set_line_formatter (agent formatter.format)
-```
-
-Copy caller-owned strings in `make` when later external mutation must not alter
-the output. This is the same ownership rule used by `PB_FORMATTERS.standard_formatter`.
-
 ## Stateful formatter algorithm
 
 A formatter object may also compare the current snapshot with state retained
