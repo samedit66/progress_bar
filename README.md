@@ -9,6 +9,8 @@
 Terminal progress bars for Eiffel. Void-safe, ELKS-only, with synchronous output
 to standard output and support for EiffelStudio and Gobo.
 
+![Renderer showcase](examples/demo/demo.gif)
+
 </div>
 
 ## Quick start
@@ -126,6 +128,12 @@ Install `just`, Gobo, and EiffelStudio. `GOBO` defaults to `~/Projects/gobo`;
 - `just test`: run behavioral tests with both compilers and assertions enabled.
 - `just check`: analyze the library and example with both compilers.
 - `just format`: format Eiffel source files.
+
+The renderer showcase is implemented in
+[examples/demo/demo_application.e](examples/demo/demo_application.e) and uses
+the configuration in [examples/demo/demo.ecf](examples/demo/demo.ecf). The GIF
+is a real terminal capture made with [VHS](https://github.com/charmbracelet/vhs)
+from the tape in [examples/demo/demo.tape](examples/demo/demo.tape).
 
 Tests exercise progress bounds, completion, formatters, emitted terminal sequences,
 and grouped output. Test renderers override only `emit`, retaining the production

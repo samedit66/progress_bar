@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system xmlns="http://www.eiffel.com/developers/xml/configuration-1-23-0"
+    name="progress_bar_demo"
+    uuid="9B8A4A6D-97BB-4C14-9AF7-7A4BF7E5A4B6">
+    <target name="demo">
+        <root class="DEMO_APPLICATION" feature="make"/>
+        <setting name="console_application" value="true"/>
+        <setting name="executable_name" value="progress_bar_demo"/>
+        <capability>
+            <void_safety support="all" use="all"/>
+        </capability>
+        <library name="gobo_free_elks" location="${GOBO}/library/free_elks/library_${GOBO_EIFFEL}.ecf">
+            <condition><custom name="GOBO_EIFFEL" value="ge"/></condition>
+        </library>
+        <library name="ise_base" location="$ISE_LIBRARY/library/base/base.ecf">
+            <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
+        </library>
+        <library name="progress_bar" location="../../progress_bar.ecf" readonly="true"/>
+        <cluster name="demo" location="." recursive="false"/>
+    </target>
+</system>

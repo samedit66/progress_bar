@@ -15,15 +15,24 @@ build:
 
 # Format all Eiffel sources.
 format:
-    for source in src/*.e src/renders/*.e tests/*.e examples/quick_start/*.e; do (cd "$(dirname "$source")" && GOBO_EIFFEL=ge "{{ gedoc }}" --silent --force "$(basename "$source")") || exit; done
+    for source in src/*.e src/renders/*.e tests/*.e examples/*/*.e; do (cd "$(dirname "$source")" && GOBO_EIFFEL=ge "{{ gedoc }}" --silent --force "$(basename "$source")") || exit; done
 
-# Generate and run the test suite with both Eiffel backends.
-test:
+# Generate the Eiffel test classes used by both backends.
+generate-tests:
     "{{ getest }}" -g tests/getest.cfg
+
+# Compile and run the test suite with Gobo Eiffel.
+test-gobo: generate-tests
     GOBO_EIFFEL=ge "{{ gec }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --gelint --target=pb_tests progress_bar.ecf
     ./pb_tests{{ exe }}
+
+# Compile and run the test suite with EiffelStudio.
+test-ise: generate-tests
     GOBO_EIFFEL=ise "{{ ec }}" -batch -clean -config progress_bar.ecf -target pb_tests -c_compile
     ./EIFGENs/pb_tests/W_code/pb_tests{{ exe }}
+
+# Generate and run the test suite with both Eiffel backends.
+test: test-gobo test-ise
 
 # Check the library and quick-start configuration with both Eiffel backends.
 check:
