@@ -28,6 +28,8 @@ jobs:
         os: [ubuntu-24.04, macos-14, windows-2022]
     steps:
       - uses: actions/checkout@v6
+      - name: Install just
+        run: cargo install --locked just
       - name: Install Gobo
         if: runner.os != 'Windows'
         env:
@@ -40,19 +42,7 @@ jobs:
         shell: pwsh
         run: .github/scripts/install-gobo.ps1
       - name: Build and test
-        if: runner.os != 'Windows'
-        run: make test-gobo
-      - name: Build and test
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          & "$env:GOBO\bin\getest.exe" -g tests\getest.cfg
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:GOBO_EIFFEL = "ge"
-          & "$env:GOBO\bin\gec.exe" --variable=GOBO_EIFFEL=ge --ise=25.12 --gelint --target=pb_tests progress_bar.ecf
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & .\pb_tests.exe
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: just test-gobo
 
   eiffelstudio:
     name: EiffelStudio / ${{ matrix.os }}
@@ -64,6 +54,8 @@ jobs:
         os: [ubuntu-24.04, macos-14, windows-2022]
     steps:
       - uses: actions/checkout@v6
+      - name: Install just
+        run: cargo install --locked just
       - name: Install Gobo
         if: runner.os != 'Windows'
         env:
@@ -89,17 +81,12 @@ jobs:
         run: ec -version
       - name: Compile and test
         if: runner.os != 'Windows'
-        run: make test-ise
+        run: just test-ise
       - name: Compile and test
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call .github\scripts\setup-msvc.cmd
           if errorlevel 1 exit /b 1
-          set "GOBO_EIFFEL=ise"
-          "%GOBO%\bin\getest.exe" -g tests\getest.cfg
-          if errorlevel 1 exit /b 1
-          ec.exe -batch -config progress_bar.ecf -target pb_tests -c_compile
-          if errorlevel 1 exit /b 1
-          EIFGENs\pb_tests\W_code\pb_tests.exe
+          just test-ise
           if errorlevel 1 exit /b 1

@@ -6,114 +6,137 @@
 [![Gobo Eiffel](https://img.shields.io/badge/toolchain-Gobo%20Eiffel-8B5A2B)](https://www.gobosoft.com/)
 [![CI](https://github.com/samedit66/progress_bar/actions/workflows/ci.yml/badge.svg)](https://github.com/samedit66/progress_bar/actions/workflows/ci.yml)
 
-Terminal progress for Eiffel. Void-safe, ELKS-only, with synchronous output to
-standard error and support for EiffelStudio and Gobo.
+Terminal progress bars for Eiffel. Void-safe, ELKS-only, with synchronous output
+to standard output and support for EiffelStudio and Gobo.
 
 </div>
 
 ## Quick start
 
-Use `PB_BAR` to report completed work with manual progress updates:
+Make a bar with a known count of steps:
 
 ```eiffel
 local
-    bar: PB_BAR
+    bar: PB_PROGRESS_BAR
 do
     create bar.make_with_total (10)
-    from bar.start until bar.is_finished loop
+    from until bar.has_finished loop
         do_work
-        bar.forth
+        bar.advance -- Same as `bar.advance_by (1)`
     end
 end
 ```
 
 Replace `do_work` with your operation. Reaching the total finishes the bar.
 
-Use `PB_ITERABLE [G]`, inspired by Python's [tqdm](https://github.com/tqdm/tqdm),
-to wrap an existing iterable:
+Use `PB_WRAPPED_BAR [G]`, inspired by Python's [tqdm](https://github.com/tqdm/tqdm),
+to wrap an existing iterable. A finite iterable supplies the bar's total; an
+unknown-size iterable uses the unknown-total form:
 
 ```eiffel
 local
-    bar: PB_ITERABLE [STRING]
-    items: ARRAY [STRING]
+    bar: PB_WRAPPED_BAR [STRING]
 do
-    items := << "this", "and that", "and also that" >>
-    create bar.make_over (items)
+    create bar.wrap (<< "this", "and that", "and also that" >>)
 
     across bar as item loop
-        do_work (item) -- `item` is a string from `items`.
+        do_work (item) -- `item` is a string from `items`
     end
 end
 ```
 
-Use `PB_STEP_BAR` to iterate over numbered steps with automatic progress updates:
+To print text without breaking a running bar, use the `put_line` feature. It is
+available on both `PB_PROGRESS_BAR` and `PB_WRAPPED_BAR`:
 
 ```eiffel
 local
-    bar: PB_STEP_BAR
+    bar: PB_PROGRESS_BAR
 do
-    create bar.make_with_total (100)
-
-    across bar as step loop
-        do_work (step) -- `step` is an integer from 1 to 100.
-    end
-end
-```
-
-To show several progress bars at once, share a `PB_DISPLAY` between them:
-
-```eiffel
-local
-    outer_bar: PB_STEP_BAR
-    inner_bar: PB_STEP_BAR
-do
-    create outer_bar.make_with_total (100)
-
-    across outer_bar as outer_step loop
-        create inner_bar.make_with_total (20)
-        inner_bar.set_display (outer_bar.display) -- Share the outer bar's display.
-
-        across inner_bar as inner_step loop
-            -- ...
+    create bar.make_with_total (10_000)
+    from until bar.has_finished loop
+        if bar.absolute_progress \\ 100 = 3 then
+            bar.put_line ("Magic number: " + bar.absolute_progress.out)
         end
+
+        bar.advance
     end
 end
 ```
 
-## Public API at a glance
+To show several bars at once, connect them via `PB_MULTIPLE_PROGRESS_RENDERER`:
 
-| Type | Features |
-| --- | --- |
-| `PB_BAR` | `make_with_total`, `make_unknown`; `start`, `forth`, `forth_by`, `set_progress`, `pulse`, `finish`; `progress`, `has_total`, `total`, `is_started`, `is_finished`, `keeps_final_line` |
-| `PB_ITERABLE [G]` | `make_over`, `new_cursor` (used by `across`) |
-| `PB_STEP_BAR` | `make_with_total`; inherits iterable behavior for `INTEGER` steps |
-| All three | `display`, `set_display`, `set_line_formatter`, `keep_final_line`, `discard_final_line`, `put_line` |
+```eiffel
+local
+    first, second: PB_PROGRESS_BAR
+    group: PB_MULTIPLE_PROGRESS_RENDERER
+do
+    create first.make_with_total (10)
+    create second.make_with_total (20)
+    create group.make (<< first, second >>)
+    first.advance
+    second.advance_by (3)
+    first.put_line ("Working")
+end
+```
 
-Formatter agents receive an immutable `PB_PROGRESS` snapshot; `PB_FORMATTERS`
-provides built-in agents through class features such as
-`{PB_FORMATTERS}.basic_formatter`. No factory object is needed. Inherit
-`PB_FORMATTERS` for short calls such as `basic_formatter`; the
-[quick-start application](examples/quick_start/application.e) demonstrates this.
-See [formatter usage](docs/formatters.md) for built-in formatters, inheritance,
-and custom formatter agents.
+Create a fixed group before any of its bars are displayed. Configure each bar's
+renderer before grouping. Every update redraws the group in the supplied order;
+finished rows remain visible. Do not replace individual renderers while grouped.
 
-## Installation and documentation
+## Formatting
 
-Add the repository to your application and reference `progress_bar.ecf`:
+Each bar starts with its own `PB_BASIC_PROGRESS_RENDERER`, showing `[current/total]`
+or `[current/?]`. The library also provides these renderers, inspired by
+[verigak/progress](https://github.com/verigak/progress):
+
+- `PB_UNICODE_PROGRESS_RENDERER` — partial-block Unicode bar with a percentage;
+- `PB_CHARGING_PROGRESS_RENDERER` — solid blocks with a percentage;
+- `PB_SQUARES_PROGRESS_RENDERER` — filled and empty squares with a percentage;
+- `PB_CIRCLES_PROGRESS_RENDERER` — filled and empty circles with a percentage;
+- `PB_PIXEL_PROGRESS_RENDERER` — braille-pixel bar with a counter;
+- `PB_MOON_SPINNER_RENDERER` — moon-phase spinner for indeterminate work.
+
+To select a renderer:
+
+```eiffel
+bar.set_renderer (create {PB_UNICODE_PROGRESS_RENDERER})
+```
+
+To define another presentation, inherit `PB_PROGRESS_RENDERER` and implement
+`format_line (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
+See [formatters](docs/formatters.md).
+
+## Installation
+
+Reference `progress_bar.ecf` from the application's ECF:
 
 ```xml
 <library name="progress_bar" location="vendor/progress_bar/progress_bar.ecf" readonly="true"/>
 ```
 
-- [Tutorial](docs/tutorial.md): setup, manual updates, traversal, and sharing displays.
-- [API reference](docs/reference.md): contracts, lifecycle, rendering, and limitations.
-- [Formatters](docs/formatters.md): agents using [`PB_PROGRESS`](src/progress/pb_progress.e) and [`PB_FORMATTERS`](src/formatter/pb_formatters.e).
-- [Quick-start application](examples/quick_start/application.e): complete executable examples.
-- [Display](src/internal/pb_display.e), [row handle](src/internal/pb_display_line.e), [renderer](src/internal/pb_terminal_renderer.e), and [iteration cursor](src/iteration/pb_iteration_cursor.e): implementation details.
+The library uses standard Eiffel classes and is void-safe. Set `GOBO` to the Gobo
+installation and `GOBO_EIFFEL` to `ge` or `ise` for the selected compiler.
 
 ## Development
 
-CI uses Gobo 26.06 and EiffelStudio 25.12 on Linux, macOS, and Windows.
-`make test` runs both test suites; `make check` runs both analyzers;
-`make format` formats Eiffel sources. `make gobo` or `make ise` runs the example.
-`make test-ise-finalized` tests the finalized EiffelStudio build with assertions retained.
+Install `just`, Gobo, and EiffelStudio. `GOBO` defaults to `~/Projects/gobo`;
+`GEC`, `GELINT`, `GETEST`, `GEDOC`, and `EC` may override tool locations.
+
+- `just build`: compile the example with Gobo and EiffelStudio.
+- `just test`: run behavioral tests with both compilers and assertions enabled.
+- `just check`: analyze the library and example with both compilers.
+- `just format`: format Eiffel source files.
+
+Tests exercise progress bounds, completion, formatters, emitted terminal sequences,
+and grouped output. Test renderers override only `emit`, retaining the production
+rendering behavior. CI runs both compilers on Linux, macOS, and Windows.
+
+## Migration
+
+The current API uses `PB_PROGRESS_BAR` and the `advance` / `advance_by` commands.
+Rendering is provided by renderer classes rather than agents. Use
+`PB_WRAPPED_BAR [G]` when progress should follow an iterable automatically.
+Progress is exposed through the `absolute_progress` query; there is no setter.
+
+See the [tutorial](docs/tutorial.md), [API reference](docs/reference.md), and
+[example](examples/quick_start/application.e).

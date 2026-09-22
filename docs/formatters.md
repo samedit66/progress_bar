@@ -1,151 +1,52 @@
-# Formatters
+# Custom formatting
 
-A formatter is an Eiffel function agent from one immutable `PB_PROGRESS`
-snapshot to display text:
-
-```eiffel
-FUNCTION [
-    TUPLE [progress: PB_PROGRESS],
-    READABLE_STRING_GENERAL
-]
-```
-
-No formatter base class is required. A routine agent is enough for local
-presentation, while a dedicated object can retain state for measurements that
-span updates.
-
-## Built-in formatters
-
-Use class features directly; no `PB_FORMATTERS` object is required:
+Inherit `PB_PROGRESS_RENDERER` and implement the `format_line` feature:
 
 ```eiffel
-bar.set_line_formatter ({PB_FORMATTERS}.basic_formatter)
-bar.set_line_formatter (
-    {PB_FORMATTERS}.standard_formatter ("Compiling", "classes", "ready")
-)
-```
-
-| Feature | Presentation |
-| --- | --- |
-| `basic_formatter` | ASCII bar, percentage, counter, and spinner |
-| `unicode_formatter` | Unicode block bar and braille spinner |
-| `compact_formatter` | Percentage and counter, without a bar |
-| `counter_formatter` | Position and optional total |
-| `minimal_formatter` | Percentage for known progress; spinner for unknown progress |
-| `standard_formatter (label, unit, post_label)` | ASCII presentation with copied affixes |
-
-For short calls, inherit the factories:
-
-```eiffel
-class APPLICATION
-
+class PB_FILES_RENDERER
 inherit
-    PB_FORMATTERS
-        rename
-            counter_formatter as progress_counter_formatter
-        export
-            {NONE} all
-        end
-
-create
-    make
-
-feature {NONE} -- Initialization
-
-    make
-        local
-            bar: PB_BAR
+    PB_PROGRESS_RENDERER
+feature
+    format_line (bar: PB_PROGRESS_BAR): STRING_32
         do
-            create bar.make_with_total (100)
-            bar.set_line_formatter (progress_counter_formatter)
-            bar.set_progress (25)
-            bar.finish
+            Result := "Files: " + bar.absolute_progress.out
+            if bar.has_total then
+                Result.append_string_general (" / " + bar.total.out)
+            end
         end
-
 end
 ```
 
-The `*_formatter` suffix avoids common names such as `counter`. Use `rename`
-for remaining conflicts. `export {NONE} all` keeps these features out of the
-application's public interface; it does not resolve name conflicts inside it.
-Formatting helpers belong to a separate internal class and are not inherited.
-
-Inheritance provides access to built-in factories. Custom behavior remains an
-ordinary formatter agent; there are no inherited algorithm hooks to override.
-Built-in agents use a private stateless implementation object, never the
-application object that calls an inherited factory. Fixed factories cache their
-agents with `once`; agent identity is not part of the API contract. Each
-`standard_formatter` call owns copies of its affixes, independent of other calls.
-
-## Pure formatter algorithm
-
-A pure formatter can be implemented with this sequence:
-
-1. Append the label owned by the formatter.
-2. Branch on `progress.has_total`.
-3. For known progress, derive visual fill from `fraction` or use `percentage`.
-4. For unknown progress, select a frame from `revision` and display `position`.
-5. Suppress animation-only decoration when `is_final`.
-6. Append the unit and trailing label.
-7. Return a new string, or a buffer that may be reused after the call returns.
-
-For example:
+Install it before displaying the bar:
 
 ```eiffel
-format_files (a_progress: PB_PROGRESS): STRING_32
-        -- Format file-count progress.
-    do
-        create Result.make (32)
-        Result.append_string_general ("Files: ")
-        Result.append_integer_64 (a_progress.position)
-        if a_progress.has_total then
-            Result.append_string_general (" / ")
-            Result.append_integer_64 (a_progress.total)
-        elseif not a_progress.is_final then
-            Result.append_string_general (" ...")
-        end
-    end
+bar.set_renderer (create {PB_FILES_RENDERER})
 ```
 
-Connect it directly:
+`format_line` returns one physical line without carriage returns or newlines.
+Check `has_total` before using `total` in a known/unknown display. Use
+`has_finished` if final text should differ from active text. Return a fresh string:
+the single-line renderer may pad and retain the returned string.
 
-```eiffel
-create bar.make_unknown
-bar.set_line_formatter (agent format_files)
-```
+The built-in renderers are inspired by the styles in
+[verigak/progress](https://github.com/verigak/progress):
 
-## Stateful formatter algorithm
+| Renderer | Style |
+| --- | --- |
+| `PB_BASIC_PROGRESS_RENDERER` | ASCII counter, `[current/total]` or `[current/?]` |
+| `PB_UNICODE_PROGRESS_RENDERER` | Partial-block Unicode bar and percentage |
+| `PB_CHARGING_PROGRESS_RENDERER` | Solid blocks and percentage |
+| `PB_SQUARES_PROGRESS_RENDERER` | Filled/empty squares and percentage |
+| `PB_CIRCLES_PROGRESS_RENDERER` | Filled/empty circles and percentage |
+| `PB_PIXEL_PROGRESS_RENDERER` | Braille-pixel bar and counter |
+| `PB_MOON_SPINNER_RENDERER` | Moon-phase spinner driven by progress updates |
 
-A formatter object may also compare the current snapshot with state retained
-from the previous call:
+The block renderers show a filled bar for a known total and fall back to a
+counter for an unknown total. The moon spinner is intended for indeterminate
+work and advances its phase as `absolute_progress` changes.
 
-1. Read the new `position` and the object's previous sample.
-2. Obtain any external measurement through the object's own dependency.
-3. Derive the presentation value from the sample delta.
-4. Build the line.
-5. Commit the new sample only after the line has been built successfully.
-6. Treat `is_final` explicitly and avoid animation-only output on the final
-   line.
-
-This supports rates, smoothed measurements, or ETA without adding time or any
-domain dependency to `progress_bar`. The formatter object owns its clock,
-sampling policy, and behavior when there is insufficient history.
-
-Do not assume that identical terminal text means the formatter was skipped.
-The library invokes the formatter on every logical refresh and deduplicates
-only the resulting terminal write, so stateful formatters continue to observe
-all updates.
-
-## Units and scaling
-
-Keep unit conversion inside the formatter. A byte formatter, for example,
-should:
-
-1. choose a scale from the largest value it must present;
-2. use the same scale for position and total;
-3. define whether prefixes are decimal or binary;
-4. round only for display;
-5. fall back to position-only output when the total is unknown.
-
-The bar continues to receive raw absolute integers. This prevents presentation
-rounding from affecting completion semantics.
+A renderer owns output state, so create a separate instance for each bar. Set the
+renderer before adding the bar to `PB_MULTIPLE_PROGRESS_RENDERER`. The group retains
+the original renderer as a formatter and calls it whenever *any* row updates.
+Changing a grouped bar's renderer does not merely change its format: it disconnects
+that bar from the formatter captured by the group.
