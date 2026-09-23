@@ -23,7 +23,7 @@ feature {NONE} -- Initialization
 			meaningful_total: a_total >= -1
 		do
 			total := a_total
-			create {PB_BASIC_PROGRESS_RENDERER} renderer
+			create {PB_TIMING_RENDERER} renderer.make (create {PB_UNICODE_PROGRESS_RENDERER})
 		end
 
 feature -- Commands

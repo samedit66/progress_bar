@@ -14,10 +14,23 @@
         <library name="gobo_free_elks" location="${GOBO}/library/free_elks/library_${GOBO_EIFFEL}.ecf">
             <condition><custom name="GOBO_EIFFEL" value="ge"/></condition>
         </library>
+        <library name="gobo_time" location="${GOBO}/library/time/library.ecf">
+            <condition><custom name="GOBO_EIFFEL" value="ge"/></condition>
+        </library>
         <library name="ise_base" location="$ISE_LIBRARY/library/base/base.ecf">
             <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
         </library>
-        <cluster name="src" location="src" recursive="true"/>
+        <library name="ise_time" location="$ISE_LIBRARY/library/time/time.ecf">
+            <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
+        </library>
+        <cluster name="src" location="src" recursive="false"/>
+        <cluster name="renders" location="src/renders" recursive="false"/>
+        <cluster name="time_ise" location="src/time/ise" recursive="false">
+            <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
+        </cluster>
+        <cluster name="time_gobo" location="src/time/gobo" recursive="false">
+            <condition><custom name="GOBO_EIFFEL" value="ge"/></condition>
+        </cluster>
     </target>
     <target name="pb_tests" extends="progress_bar">
         <root class="PB_TESTS" feature="make"/>

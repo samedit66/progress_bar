@@ -104,6 +104,17 @@ To select a renderer:
 bar.set_renderer (create {PB_UNICODE_PROGRESS_RENDERER})
 ```
 
+To add elapsed time and ETA to any renderer, wrap it with
+`PB_TIMING_RENDERER`:
+
+```eiffel
+bar.set_renderer (create {PB_TIMING_RENDERER}.make (
+    create {PB_UNICODE_PROGRESS_RENDERER}))
+```
+
+The timing renderer displays `HH:MM:SS ETA HH:MM:SS`. ETA is shown as
+`--:--:--` until a known-total bar has positive progress.
+
 To define another presentation, inherit `PB_PROGRESS_RENDERER` and implement
 `format_line (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
 See [formatters](docs/formatters.md).

@@ -60,6 +60,17 @@ The additional built-in renderers are inspired by
 - `PB_CIRCLES_PROGRESS_RENDERER` uses filled and empty circles;
 - `PB_PIXEL_PROGRESS_RENDERER` uses braille pixels and a counter;
 - `PB_MOON_SPINNER_RENDERER` uses moon phases for indeterminate work.
+- `PB_TIMING_RENDERER` decorates any renderer with elapsed time and ETA.
+
+Create the timing decorator around the desired renderer:
+
+```eiffel
+bar.set_renderer (create {PB_TIMING_RENDERER}.make (
+    create {PB_UNICODE_PROGRESS_RENDERER}))
+```
+
+It displays elapsed time and ETA as `HH:MM:SS`. Unknown totals and bars with
+zero progress display `--:--:--` for ETA.
 
 A single-line renderer remembers its last text and completion state. Give each bar
 its own instance. It pads shorter output to erase the previous tail and terminates

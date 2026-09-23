@@ -17,6 +17,8 @@ feature -- Tests
 		do
 			create first.make_with_total (2)
 			create second.make_with_total (3)
+			first.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
+			second.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
 			create output.make (<<first, second>>)
 			assert_true ("construction is silent", output.captured.is_empty)
 			first.advance
@@ -44,6 +46,7 @@ feature -- Tests
 		do
 			create first.make_with_total (2)
 			create second.make_with_total (3)
+			first.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
 			create unicode_renderer
 			second.set_renderer (unicode_renderer)
 			create output.make (<<first, second>>)
@@ -60,6 +63,8 @@ feature -- Tests
 		do
 			create first.make_unknown
 			create second.make_with_total (3)
+			first.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
+			second.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
 			create output.make (<<first, second>>)
 			first.advance
 			output.reset
