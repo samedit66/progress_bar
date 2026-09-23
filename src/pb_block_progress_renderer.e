@@ -22,15 +22,15 @@ feature
 				else
 					ratio := a_progress_bar.absolute_progress / a_progress_bar.total
 				end
-				units := (ratio * (Width * phases.count)).floor
+				units := (ratio * (bar_width * phases.count)).floor
 				full_cells := units // phases.count
 				remainder := units \\ phases.count
-				create Result.make (Width + 16)
+				create Result.make (bar_width + 16)
 				Result.extend ('[')
 				from
 					i := 1
 				until
-					i > Width
+					i > bar_width
 				loop
 					if i <= full_cells then
 						Result.extend (phases [phases.count])
@@ -53,6 +53,12 @@ feature {NONE} -- Implementation
 
 	Width: INTEGER = 32
 			-- Number of character cells in the rendered bar.
+
+	bar_width: INTEGER
+			-- Number of character cells used by this renderer.
+		do
+			Result := Width
+		end
 
 	phases: STRING_32
 			-- Ordered symbols from the least to the most filled cell.
