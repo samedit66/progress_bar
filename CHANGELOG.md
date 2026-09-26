@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.0] - 2026-09-27
+
+### Added
+
+- Added spinner presets for ASCII, pie, moon, line, and Braille pixel phases.
+- Added `set_show_count` and `set_show_elapsed` to
+  `PB_SPINNER_PROGRESS_RENDERER`.
+
+### Changed
+
+- `PB_SPINNER_PROGRESS_RENDERER.make` now uses Unicode moon phases by default.
+- Spinner output is compact by default: it shows the description and current
+  phase without a counter, elapsed time, or unavailable ETA.
+
+### Compatibility notes
+
+- This release changes the default spinner output and is therefore a breaking
+  release for applications that snapshot or parse terminal output.
+- Applications that need the previous ASCII phase sequence can use
+  `{PB_RENDERER_PRESETS}.spinner`.
+- Applications that need the previous counter or elapsed time can enable them
+  explicitly with `set_show_count (True)` and `set_show_elapsed (True)`.
+
 ## [0.2.0] - 2026-09-24
 
 ### Added
@@ -33,4 +56,3 @@ All notable changes to this project are documented in this file.
   ```eiffel
   bar.set_renderer (create {PB_BASIC_PROGRESS_RENDERER})
   ```
-
