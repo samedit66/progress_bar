@@ -55,5 +55,6 @@ Create all bars, install any custom renderers, and create a
 any order; all rows stay visible and completion is independent. Use `put_line`
 on a grouped bar to print messages above the block.
 
-The [quick-start application](../examples/quick_start/application.e) contains
-an iterable-backed bar and a progress message. Run it with `just run`.
+The [demo application](../examples/demo/demo_application.e) contains examples
+of standard bars, spinners, messages, and grouped output. Build it with
+`just build`.

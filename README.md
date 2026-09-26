@@ -155,4 +155,4 @@ and grouped output. Test renderers override only `emit`, retaining the productio
 rendering behavior. CI runs both compilers on Linux, macOS, and Windows.
 
 See the [tutorial](docs/tutorial.md), [API reference](docs/reference.md), and
-[example](examples/quick_start/application.e).
+[demo application](examples/demo/demo_application.e).
