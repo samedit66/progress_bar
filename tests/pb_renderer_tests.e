@@ -85,10 +85,39 @@ feature -- Tests
 			create renderer.make
 			renderer.set_phases ("ab")
 			line := renderer.format_line (bar)
-			assert_true ("description and first phase", line.has_substring ("Loading a 0"))
+			assert_true ("description and first phase", line.same_string ("Loading a"))
 			bar.advance
 			line := renderer.format_line (bar)
-			assert_true ("next phase", line.has_substring ("Loading b 1"))
+			assert_true ("next phase", line.same_string ("Loading b"))
+			renderer.set_show_count (True)
+			renderer.set_show_elapsed (True)
+			line := renderer.format_line (bar)
+			assert_true ("optional details", line.has_substring ("Loading b 1 00:00:00"))
+		end
+
+	test_spinner_presets
+		local
+			bar: PB_PROGRESS_BAR
+			renderer: PB_SPINNER_PROGRESS_RENDERER
+			line: STRING_32
+		do
+			create bar.make_unknown
+			bar.set_description ("Loading")
+			create renderer.make
+			line := renderer.format_line (bar)
+			assert_true ("default moon spinner", line.same_string ("Loading %/9681/"))
+			renderer := {PB_RENDERER_PRESETS}.moon_spinner
+			line := renderer.format_line (bar)
+			assert_true ("moon preset", line.same_string ("Loading %/9681/"))
+			renderer := {PB_RENDERER_PRESETS}.spinner
+			line := renderer.format_line (bar)
+			assert_true ("ascii preset", line.same_string ("Loading -"))
+			renderer := {PB_RENDERER_PRESETS}.pie_spinner
+			assert_true ("pie preset", renderer.format_line (bar).same_string ("Loading %/9719/"))
+			renderer := {PB_RENDERER_PRESETS}.line_spinner
+			assert_true ("line preset", renderer.format_line (bar).same_string ("Loading %/9146/"))
+			renderer := {PB_RENDERER_PRESETS}.pixel_spinner
+			assert_true ("pixel preset", renderer.format_line (bar).same_string ("Loading %/10494/"))
 		end
 
 	test_unknown_progress_uses_counter

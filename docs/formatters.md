@@ -30,13 +30,34 @@ the single-line renderer may pad and retain the returned string.
 
 The built-in `PB_STANDARD_PROGRESS_RENDERER` supports configurable width, fill and
 empty characters, percentage or counter output, description, elapsed time, and ETA.
-Use `PB_SPINNER_PROGRESS_RENDERER` for indeterminate work; its phases and counter
-are configurable.
+Use `PB_SPINNER_PROGRESS_RENDERER` for indeterminate work. It displays the
+description and current phase by default; the progress count and elapsed time can
+be enabled explicitly with `set_show_count` and `set_show_elapsed`.
 
 Common standard styles can be selected without configuring characters manually:
 
 ```eiffel
 bar.set_renderer ({PB_RENDERER_PRESETS}.squares)
+```
+
+Spinner presets are also available:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.moon_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.pie_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.line_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.pixel_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.spinner) -- ASCII fallback
+```
+
+`PB_SPINNER_PROGRESS_RENDERER.make` uses the Unicode moon phases by default:
+`◑◒◐◓`. The spinner deliberately omits elapsed time, counters, and ETA from its
+default line because ETA is unavailable for unknown work. Enable the count or
+elapsed time when that detail is useful:
+
+```eiffel
+renderer.set_show_count (True)
+renderer.set_show_elapsed (True)
 ```
 
 Preset features create a fresh renderer for every call. A renderer owns output

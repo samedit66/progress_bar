@@ -59,8 +59,9 @@ rendering. `PB_STANDARD_PROGRESS_RENDERER` is the configurable renderer used by
 default. It supports description, fill and empty characters, width, percentage or
 counter output, elapsed time, and ETA.
 
-For unknown work, use `PB_SPINNER_PROGRESS_RENDERER`. It displays configurable
-phases and the current counter, together with elapsed time. This follows the
+For unknown work, use `PB_SPINNER_PROGRESS_RENDERER`. It displays a configurable
+phase next to the description. The current counter and elapsed time are optional;
+ETA is not displayed because it is unavailable for unknown work. This follows the
 common separation between bars and spinners used by
 [verigak/progress](https://github.com/verigak/progress).
 
@@ -83,6 +84,21 @@ bar.set_renderer ({PB_RENDERER_PRESETS}.circles)
 bar.set_renderer ({PB_RENDERER_PRESETS}.pixels)
 bar.set_renderer ({PB_RENDERER_PRESETS}.unicode)
 ```
+
+Spinner presets are available as fresh instances:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.spinner)       -- ASCII: -\|/
+bar.set_renderer ({PB_RENDERER_PRESETS}.pie_spinner)  -- ◷◶◵◴
+bar.set_renderer ({PB_RENDERER_PRESETS}.moon_spinner)  -- ◑◒◐◓
+bar.set_renderer ({PB_RENDERER_PRESETS}.line_spinner)  -- ⎺⎻⎼⎽⎼⎻
+bar.set_renderer ({PB_RENDERER_PRESETS}.pixel_spinner) -- Braille phases
+```
+
+`PB_SPINNER_PROGRESS_RENDERER.make` uses the `moon_spinner` phases by default.
+Its default output is compact, for example `Loading ◑`. Use
+`set_show_count (True)` and `set_show_elapsed (True)` to include the current
+count and elapsed time when needed. Each preset call creates a new renderer.
 
 Each preset call creates a new renderer. Do not share one renderer between bars.
 

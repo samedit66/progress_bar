@@ -89,11 +89,18 @@ finished rows remain visible. Do not replace individual renderers while grouped.
 
 Each bar starts with its own `PB_STANDARD_PROGRESS_RENDERER`, showing a configurable
 bar with percentage, elapsed time, and ETA. For unknown work, use
-`PB_SPINNER_PROGRESS_RENDERER` with configurable phases.
+`PB_SPINNER_PROGRESS_RENDERER` with configurable phases. It defaults to a
+compact Unicode moon spinner such as `Loading ◑`; counters and elapsed time are
+opt-in with `set_show_count` and `set_show_elapsed`.
 
 Common styles can be selected through fresh renderer presets such as
 `{PB_RENDERER_PRESETS}.squares`, `{PB_RENDERER_PRESETS}.circles`, and
 `{PB_RENDERER_PRESETS}.pixels`.
+
+Spinner presets include `{PB_RENDERER_PRESETS}.moon_spinner`,
+`{PB_RENDERER_PRESETS}.pie_spinner`, `{PB_RENDERER_PRESETS}.line_spinner`,
+`{PB_RENDERER_PRESETS}.pixel_spinner`, and the ASCII fallback
+`{PB_RENDERER_PRESETS}.spinner`.
 
 To select a renderer:
 

@@ -35,7 +35,7 @@ feature -- Tests
 			create bar.make_unknown
 			create renderer.make
 			line := renderer.format_line (bar)
-			assert_true ("unknown eta", line.has_substring (" ETA --:--:--"))
+			assert_false ("unknown eta", line.has_substring ("ETA"))
 			assert_false ("unknown has no eta", bar.has_eta)
 		end
 
