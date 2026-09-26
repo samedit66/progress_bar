@@ -1,9 +1,9 @@
-class PB_CAPTURE_MULTIPLE_RENDERER
+class PB_CAPTURE_PROGRESS_GROUP
 	-- Exercise the real grouped renderer while retaining terminal output.
 
 inherit
 
-	PB_MULTIPLE_PROGRESS_RENDERER
+	PB_PROGRESS_GROUP
 		redefine
 			make,
 			emit

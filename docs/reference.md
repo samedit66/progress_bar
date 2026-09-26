@@ -4,17 +4,23 @@
 
 | Feature | Behavior |
 | --- | --- |
-| `make_with_total (total: INTEGER_64)` | Create a bar with the given total; `-1` denotes an unknown total |
-| `make_unknown` | Create a bar with an unknown total; equivalent to `make_with_total (-1)` |
+| `make_with_total (total: INTEGER_64)` | Create a bar with the given non-negative total |
+| `make_unknown` | Create a bar without a known total |
 | `advance` | Add one completed unit |
-| `advance_by (delta: INTEGER_64)` | Signed update, saturated between zero and the total or INTEGER_64 maximum without overflow |
+| `advance_by (delta: INTEGER_64)` | Signed update, saturated between zero and `progress_limit` without overflow |
 | `finish` | Finish at the current position and render the final state once |
 | `render` | Ask the renderer to show the current state without changing progress |
 | `set_renderer (renderer)` | Replace the renderer; configure before first output and before grouping |
 | `put_line (text)` | Delegate a message to the renderer |
 | `absolute_progress` | Accepted progress, initially zero |
-| `has_total` | Whether total is known |
-| `total` | Stored total; `-1` denotes an unknown total |
+| `has_total` | Whether `progress_limit` is a known total |
+| `progress_limit` | Maximum possible progress; `{INTEGER_64}.max_value` for unknown work |
+| `progress_ratio` | Known progress normalized to `0.0 .. 1.0` |
+| `progress_percentage` | Known progress as an integer percentage from `0` to `100` |
+| `description` | Text displayed before the progress bar |
+| `set_description (text)` | Set the text displayed before the progress bar |
+| `elapsed_seconds` | Whole seconds elapsed since bar creation |
+| `has_eta` / `eta_seconds` | Whether an ETA is available and its estimated value |
 | `has_finished` | Whether finish has occurred |
 | `renderer` | Current renderer |
 
@@ -41,33 +47,44 @@ end
 ```
 
 For a finite iterable, `wrap` uses its count as the total. For other iterables,
-it uses `-1` and the bar remains unfinished until `finish` is called explicitly.
+it uses an unknown progress limit and the bar remains unfinished until `finish`
+is called explicitly.
 The inherited `advance`, `advance_by`, and `finish` features are hidden from
 clients; iteration drives progress through `forth`.
 
 ## Renderers
 
 `PB_PROGRESS_RENDERER` defines `format_line (bar): STRING_32` and supplies single-line
-rendering. `PB_BASIC_PROGRESS_RENDERER` displays `[current/total]` or `[current/?]`.
-`PB_UNICODE_PROGRESS_RENDERER` displays a 20-cell bar with eighth-cell resolution
-and a whole percentage; unknown totals fall back to `[current/?]`.
+rendering. `PB_STANDARD_PROGRESS_RENDERER` is the configurable renderer used by
+default. It supports description, fill and empty characters, width, percentage or
+counter output, elapsed time, and ETA.
 
-The additional built-in renderers are inspired by
-[verigak/progress](https://github.com/verigak/progress):
+For unknown work, use `PB_SPINNER_PROGRESS_RENDERER`. It displays configurable
+phases and the current counter, together with elapsed time. This follows the
+common separation between bars and spinners used by
+[verigak/progress](https://github.com/verigak/progress).
 
-- `PB_CHARGING_PROGRESS_RENDERER` uses solid blocks and a percentage;
-- `PB_SQUARES_PROGRESS_RENDERER` uses filled and empty squares;
-- `PB_CIRCLES_PROGRESS_RENDERER` uses filled and empty circles;
-- `PB_PIXEL_PROGRESS_RENDERER` uses braille pixels and a counter;
-- `PB_MOON_SPINNER_RENDERER` uses moon phases for indeterminate work.
-- `PB_TIMING_RENDERER` decorates any renderer with elapsed time and ETA.
-
-Create the timing decorator around the desired renderer:
+The standard renderer can be configured directly:
 
 ```eiffel
-bar.set_renderer (create {PB_TIMING_RENDERER}.make (
-    create {PB_UNICODE_PROGRESS_RENDERER}))
+create renderer.make
+renderer.set_fill_character ('=')
+renderer.set_empty_character ('.')
+renderer.set_width (30)
+bar.set_renderer (renderer)
 ```
+
+Common styles are available as fresh renderer instances through
+`PB_RENDERER_PRESETS`:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.squares)
+bar.set_renderer ({PB_RENDERER_PRESETS}.circles)
+bar.set_renderer ({PB_RENDERER_PRESETS}.pixels)
+bar.set_renderer ({PB_RENDERER_PRESETS}.unicode)
+```
+
+Each preset call creates a new renderer. Do not share one renderer between bars.
 
 It displays elapsed time and ETA as `HH:MM:SS`. Unknown totals and bars with
 zero progress display `--:--:--` for ETA.
@@ -80,7 +97,7 @@ completion, that renderer ignores `render` and `put_line`.
 The protected `emit (text: READABLE_STRING_GENERAL)` method writes to stdout.
 Descendants may override it to redirect or capture output.
 
-## PB_MULTIPLE_PROGRESS_RENDERER
+## PB_PROGRESS_GROUP
 
 `make (bars: ITERABLE [PB_PROGRESS_BAR])` requires a nonempty iterable. Supply
 **distinct bars before their first display**, with their desired renderers already

@@ -45,12 +45,13 @@ end
 ```
 
 For a finite iterable, the wrapper uses its count as the total. Otherwise, it
-uses the unknown-total form and requires an explicit `finish` after traversal.
+uses the unknown-total form with a maximum progress limit and requires an
+explicit `finish` after traversal.
 
 ## Grouped work
 
 Create all bars, install any custom renderers, and create a
-`PB_MULTIPLE_PROGRESS_RENDERER` over them before any output. Update the bars in
+`PB_PROGRESS_GROUP` over them before any output. Update the bars in
 any order; all rows stay visible and completion is independent. Use `put_line`
 on a grouped bar to print messages above the block.
 

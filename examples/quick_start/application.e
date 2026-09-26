@@ -16,7 +16,7 @@ feature {NONE} -- Initialization
 			progress_messages
 				-- Show several progress bars at the same time.
 			multiple_progress
-				-- Show the built-in Unicode renderer.
+				-- Show the configurable standard renderer.
 			unicode_progress
 		end
 
@@ -68,7 +68,7 @@ feature {NONE} -- Examples
 	multiple_progress
 		local
 			first, second: PB_PROGRESS_BAR
-			group: PB_MULTIPLE_PROGRESS_RENDERER
+			group: PB_PROGRESS_GROUP
 		do
 			create first.make_with_total (2)
 			create second.make_with_total (3)
@@ -89,9 +89,13 @@ feature {NONE} -- Examples
 	unicode_progress
 		local
 			bar: PB_PROGRESS_BAR
+			renderer: PB_STANDARD_PROGRESS_RENDERER
 		do
 			create bar.make_with_total (3)
-			bar.set_renderer (create {PB_UNICODE_PROGRESS_RENDERER})
+			create renderer.make
+			renderer.set_fill_character ('=')
+			renderer.set_empty_character ('.')
+			bar.set_renderer (renderer)
 			from
 			until
 				bar.has_finished
