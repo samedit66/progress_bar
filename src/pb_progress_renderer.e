@@ -63,6 +63,44 @@ feature {NONE} -- Output
 
 feature {NONE} -- Implementation
 
+	append_timing (a_result: STRING_32; a_progress_bar: PB_PROGRESS_BAR)
+			-- Append elapsed time and ETA to `a_result`.
+		do
+			a_result.append_character (' ')
+			a_result.append (format_duration (a_progress_bar.elapsed_seconds))
+			a_result.append_string_general (" ETA ")
+			if a_progress_bar.has_eta then
+				a_result.append (format_duration (a_progress_bar.eta_seconds))
+			else
+				a_result.append_string_general ("--:--:--")
+			end
+		end
+
+	format_duration (a_seconds: INTEGER_64): STRING_32
+			-- Format seconds as HH:MM:SS.
+		local
+			hours, minutes, seconds: INTEGER_64
+		do
+			hours := a_seconds // 3600
+			minutes := (a_seconds \\ 3600) // 60
+			seconds := a_seconds \\ 60
+			create Result.make (8)
+			append_two_digits (Result, hours)
+			Result.append_character (':')
+			append_two_digits (Result, minutes)
+			Result.append_character (':')
+			append_two_digits (Result, seconds)
+		end
+
+	append_two_digits (a_result: STRING_32; a_value: INTEGER_64)
+			-- Append `a_value` with at least two digits.
+		do
+			if a_value < 10 then
+				a_result.append_character ('0')
+			end
+			a_result.append_integer_64 (a_value)
+		end
+
 	bar_finished: BOOLEAN
 			-- Indicates whether the progress bar has finished.
 
@@ -81,15 +119,19 @@ feature {NONE} -- Implementation
 		do
 			if attached last_line as l then
 				return_carriage
-				emit (create {STRING_32}.make_filled (Blank.to_character, l.count))
+				emit (create {STRING_32}.make_filled (Blank.to_character_8, l.count))
 				return_carriage
 			end
 		end
 
 	print_line (a_string: READABLE_STRING_GENERAL)
 			-- A shorthand for printing a string to the console with a new line after it.
+		local
+			line: STRING_32
 		do
-			emit (a_string + "%N")
+			create line.make_from_string_general (a_string)
+			line.append_character ('%N')
+			emit (line)
 		end
 
 	pad_with (a_string: STRING_32; a_character: CHARACTER_32; a_length: INTEGER)

@@ -25,7 +25,11 @@ feature {NONE}
 			-- and if it is, creates a bar with a known total.
 		do
 			original_iterable := a_iterable
-			make_with_total (guess_count (a_iterable))
+			if attached {FINITE [G]} a_iterable as finite then
+				make_with_total (finite.count)
+			else
+				make_unknown
+			end
 		end
 
 feature -- Access
@@ -38,16 +42,5 @@ feature -- Access
 feature {NONE} -- Implementation
 
 	original_iterable: ITERABLE [G]
-
-	guess_count (a_iterable: ITERABLE [G]): INTEGER_32
-		do
-			if attached {FINITE [G]} a_iterable as finite then
-				Result := finite.count
-			else
-				Result := -1
-			end
-		ensure
-			meaningful_count: Result >= -1
-		end
 
 end

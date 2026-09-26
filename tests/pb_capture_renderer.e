@@ -3,8 +3,9 @@ class PB_CAPTURE_RENDERER
 
 inherit
 
-	PB_BASIC_PROGRESS_RENDERER
+	PB_STANDARD_PROGRESS_RENDERER
 		redefine
+			make,
 			emit
 		end
 
@@ -16,6 +17,7 @@ feature {NONE} -- Initialization
 
 	make
 		do
+			Precursor
 			create captured.make_empty
 		end
 

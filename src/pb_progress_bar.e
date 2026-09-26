@@ -8,25 +8,52 @@ create
 
 feature {NONE} -- Initialization
 
-	make_unknown
-			-- Make a bar with unknown total.
-			-- Same as calling `make_with_total (-1)`.
+	make_with_total (a_total: INTEGER_64)
+			-- Make a progress bar with a known total.
+		require
+			valid_total: a_total >= 0
 		do
-			make_with_total (-1)
+			progress_limit := a_total
+			has_total := True
+			initialize
+		ensure
+			total_set: progress_limit = a_total
+			total_is_known: has_total
+			not_finished: not has_finished
+			no_progress_made_so_far: absolute_progress = 0
 		end
 
-	make_with_total (a_total: INTEGER_64)
-			-- Make a bar with a known total.
-			-- Accepts any non-negative integer as a total.
-			-- By convention also accepts `-1` -- this means it's a bar with an unknown total.
-		require
-			meaningful_total: a_total >= -1
+	make_unknown
+			-- Make a progress bar without a known total.
 		do
-			total := a_total
-			create {PB_TIMING_RENDERER} renderer.make (create {PB_UNICODE_PROGRESS_RENDERER})
+			progress_limit := {INTEGER_64}.max_value
+			has_total := False
+			initialize
+		ensure
+			unknown_total: not has_total
+			maximum_progress_limit: progress_limit = {INTEGER_64}.max_value
+			not_finished: not has_finished
+			no_progress_made_so_far: absolute_progress = 0
+		end
+
+	initialize
+			-- Initialize the common bar state and default renderer.
+		do
+			create description.make_empty
+			create clock.make
+			clock.start
+			create {PB_STANDARD_PROGRESS_RENDERER} renderer.make
 		end
 
 feature -- Commands
+
+	start
+			-- Restart the bar at zero and render it.
+		do
+			absolute_progress := 0
+			has_finished := False
+			render
+		end
 
 	advance
 			-- Advance the bar by 1.
@@ -35,33 +62,34 @@ feature -- Commands
 		end
 
 	advance_by (a_count: INTEGER_64)
-			-- Advance the bar within bounds without overflowing; finish at a known total.
+			-- Advance by `a_count`, keeping progress within its limits.
 		local
-			upper: INTEGER_64
+			remaining: INTEGER_64
 		do
 			if not has_finished then
-				if has_total then
-					upper := total
-				else
-					upper := {INTEGER_64}.max_value
-				end
-				if a_count > upper - absolute_progress then
-					absolute_progress := upper
+				remaining := progress_limit - absolute_progress
+
+				if a_count > remaining then
+					absolute_progress := progress_limit
 				elseif a_count < -absolute_progress then
 					absolute_progress := 0
 				else
-					absolute_progress := absolute_progress + a_count
+					absolute_progress := (absolute_progress + a_count).max (0)
 				end
-				if has_total and then absolute_progress = total then
+
+				if has_total and then absolute_progress = progress_limit then
 					finish
 				else
 					render
 				end
 			end
+		ensure
+			non_negative_progress: absolute_progress >= 0
+			progress_within_limit: absolute_progress <= progress_limit
 		end
 
 	finish
-			-- Force finish the bar.
+			-- Finish the bar at its current progress and render it once.
 		do
 			if not has_finished then
 				has_finished := True
@@ -72,7 +100,13 @@ feature -- Commands
 	set_renderer (a_renderer: PB_PROGRESS_RENDERER)
 			-- Set a renderer for the bar.
 		do
-			renderer := a_renderer
+		renderer := a_renderer
+		end
+
+	set_description (a_description: READABLE_STRING_GENERAL)
+			-- Set the text displayed before the progress bar.
+		do
+			description := a_description.as_string_32
 		end
 
 	render
@@ -82,37 +116,91 @@ feature -- Commands
 		end
 
 	put_line (a_string: READABLE_STRING_GENERAL)
-			-- Print `a_string` to the console with a new line after it above the progress bar.
-			-- See `PB_PROGRESS_RENDERER.put_line` for details.
+			-- Print `a_string` above the progress bar.
 		do
 			renderer.put_line (a_string)
 		end
 
-feature -- Queries
+feature -- Status report
 
 	has_total: BOOLEAN
-			-- Has the bar a known total?
-		do
-			Result := total > -1
-		end
-
-	total: INTEGER_64
-			-- The total.
+			-- Is the progress limit a known total?
 
 	has_finished: BOOLEAN
 			-- Has the bar finished?
 
+feature -- Measurement
+
+	description: STRING_32
+			-- Text displayed before the progress bar.
+
+	elapsed_seconds: INTEGER_64
+			-- Whole seconds elapsed since creation.
+		do
+			Result := clock.elapsed_seconds
+		end
+
+	has_eta: BOOLEAN
+			-- Is an ETA available for the current progress?
+		do
+			Result := has_total and then progress_limit > 0 and then absolute_progress > 0
+		end
+
+	progress_ratio: REAL_64
+			-- Progress as a value between 0.0 and 1.0.
+		require
+			total_is_known: has_total
+		do
+			if progress_limit = 0 then
+				Result := 1.0
+			else
+				Result := absolute_progress / progress_limit
+			end
+		ensure
+			valid_ratio: Result >= 0.0 and Result <= 1.0
+		end
+
+	progress_percentage: INTEGER_64
+			-- Progress as a whole percentage between 0 and 100.
+		require
+			total_is_known: has_total
+		do
+			Result := (progress_ratio * 100).floor
+		ensure
+			valid_percentage: Result >= 0 and Result <= 100
+		end
+
+	eta_seconds: INTEGER_64
+			-- Estimated whole seconds remaining.
+		require
+			eta_available: has_eta
+		local
+			remaining: INTEGER_64
+		do
+			remaining := progress_limit - absolute_progress
+			Result := (remaining * elapsed_seconds) // absolute_progress
+		end
+
+	progress_limit: INTEGER_64
+			-- Maximum possible absolute progress value.
+
 	absolute_progress: INTEGER_64
-			-- Abosule progress.
+			-- Absolute progress.
 
 	renderer: PB_PROGRESS_RENDERER
 			-- Attached renderer.
 
+feature {NONE} -- Implementation
+
+	clock: PB_CLOCK_IMP
+			-- Clock measuring this bar's lifetime.
+
 invariant
 
-	unknown_total: not has_total implies total = -1
-	valid_total: has_total implies total >= 0
+	positive_progress_limit: progress_limit >= 0
+	unknown_uses_maximum_limit: not has_total implies
+		progress_limit = {INTEGER_64}.max_value
 	non_negative_progress: absolute_progress >= 0
-	bounded_progress: has_total implies absolute_progress <= total
+	progress_within_limit: absolute_progress <= progress_limit
 
 end
