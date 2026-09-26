@@ -4,8 +4,8 @@
 /build/
 /pb_tests
 /pb_tests.exe
-/progress_bar_quick_start
-/progress_bar_quick_start.exe
+/progress_bar_demo
+/progress_bar_demo.exe
 *.epr
 *.o
 *.obj

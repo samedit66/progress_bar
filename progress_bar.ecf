@@ -24,7 +24,6 @@
             <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
         </library>
         <cluster name="src" location="src" recursive="false"/>
-        <cluster name="renders" location="src/renders" recursive="false"/>
         <cluster name="time_ise" location="src/time/ise" recursive="false">
             <condition><custom name="GOBO_EIFFEL" excluded_value="ge"/></condition>
         </cluster>

@@ -8,10 +8,10 @@ gedoc := env("GEDOC", GOBO / "bin/gedoc")
 ec := env("EC", "ec")
 exe := if os() == "windows" { ".exe" } else { "" }
 
-# Build the quick-start application with both Eiffel backends.
+# Build the demo application with both Eiffel backends.
 build:
-    GOBO_EIFFEL=ge "{{ gec }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --gelint --target=quick_start examples/quick_start/quick_start.ecf
-    GOBO_EIFFEL=ise "{{ ec }}" -batch -clean -config examples/quick_start/quick_start.ecf -target quick_start -c_compile
+    GOBO_EIFFEL=ge "{{ gec }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --gelint --target=demo examples/demo/demo.ecf
+    GOBO_EIFFEL=ise "{{ ec }}" -batch -clean -config examples/demo/demo.ecf -target demo -c_compile
 
 # Format all Eiffel sources.
 format:
@@ -34,12 +34,12 @@ test-ise: generate-tests
 # Generate and run the test suite with both Eiffel backends.
 test: test-gobo test-ise
 
-# Check the library and quick-start configuration with both Eiffel backends.
+# Check the library and demo configuration with both Eiffel backends.
 check:
     GOBO_EIFFEL=ge "{{ gelint }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --target=progress_bar progress_bar.ecf
-    GOBO_EIFFEL=ge "{{ gelint }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --target=quick_start examples/quick_start/quick_start.ecf
+    GOBO_EIFFEL=ge "{{ gelint }}" --variable=GOBO_EIFFEL=ge --ise=25.12 --target=demo examples/demo/demo.ecf
     GOBO_EIFFEL=ise "{{ ec }}" -batch -config progress_bar.ecf -target progress_bar -ca_default -ca_class -all
-    GOBO_EIFFEL=ise "{{ ec }}" -batch -config examples/quick_start/quick_start.ecf -target quick_start -ca_default -ca_class -all
+    GOBO_EIFFEL=ise "{{ ec }}" -batch -config examples/demo/demo.ecf -target demo -ca_default -ca_class -all
 
 # Make a gif illustration for the README.md.
 gif:

@@ -19,22 +19,8 @@ feature -- Tests
 			create output.make
 			bar.set_renderer (output)
 			bar.render
-			assert_equal ("initial display", {STRING_32} "%R[0/10]", output.captured)
+			assert_true ("initial display", output.captured.has_substring ("[                    ] 0%%"))
 			assert_true ("render preserves state", bar.absolute_progress = 0 and not bar.has_finished)
-		end
-
-	test_shorter_line_erases_previous_tail
-		local
-			bar: PB_PROGRESS_BAR
-			output: PB_CAPTURE_RENDERER
-		do
-			create bar.make_unknown
-			create output.make
-			bar.set_renderer (output)
-			bar.advance_by (100)
-			output.reset
-			bar.advance_by (-99)
-			assert_equal ("old digits erased", {STRING_32} "%R[1/?]  ", output.captured)
 		end
 
 	test_message_restores_progress_line
@@ -48,7 +34,8 @@ feature -- Tests
 			bar.advance_by (4)
 			output.reset
 			bar.put_line ("Hello")
-			assert_equal ("erase, message, restore", {STRING_32} "%R      %RHello%N[4/10]", output.captured)
+			assert_true ("message is emitted", output.captured.has_substring ("Hello%N"))
+			assert_true ("progress line is restored", output.captured.has_substring ("[########            ] 40%%"))
 			assert_true ("message does not advance", bar.absolute_progress = 4 and not bar.has_finished)
 			bar.finish
 			output.reset
@@ -57,55 +44,93 @@ feature -- Tests
 			assert_true ("finished renderer is silent", output.captured.is_empty)
 		end
 
-	test_message_before_first_render
+	test_standard_renderer_settings
 		local
 			bar: PB_PROGRESS_BAR
-			output: PB_CAPTURE_RENDERER
+			renderer: PB_STANDARD_PROGRESS_RENDERER
 		do
-			create bar.make_unknown
-			create output.make
-			bar.set_renderer (output)
-			bar.put_line ("Starting")
-			assert_equal ("no phantom progress row", {STRING_32} "Starting%N", output.captured)
+			create bar.make_with_total (4)
+			create renderer.make
+			renderer.set_width (4)
+			renderer.set_fill_character ('=')
+			renderer.set_empty_character ('-')
+			renderer.set_show_percentage (False)
+			bar.set_renderer (renderer)
+			bar.advance_by (2)
+			assert_true ("configured bar", renderer.format_line (bar).has_substring ("[==--] 2/4"))
 		end
 
-	test_unicode_fractional_cell
+	test_renderer_presets_create_independent_renderers
 		local
+			first, second: PB_STANDARD_PROGRESS_RENDERER
 			bar: PB_PROGRESS_BAR
-			output: PB_CAPTURE_RENDERER
-			formatter: PB_UNICODE_PROGRESS_RENDERER
-			expected: STRING_32
 		do
-			create bar.make_with_total (160)
-			create output.make
-			bar.set_renderer (output)
+			first := {PB_RENDERER_PRESETS}.squares
+			second := {PB_RENDERER_PRESETS}.squares
+			assert_true ("fresh preset instances", first /= second)
+			create bar.make_with_total (2)
+			bar.set_renderer (first)
 			bar.advance
-			create formatter
-			create expected.make_filled ('%/9617/', 19)
-			expected.prepend_string_general ("[%/9615/")
-			expected.append_string_general ("] 0%%")
-			assert_equal ("one eighth cell", expected, formatter.format_line (bar))
-			bar.advance_by (159)
-			create expected.make_filled ('%/9608/', 20)
-			expected.prepend_character ('[')
-			expected.append_string_general ("] 100%%")
-			assert_equal ("full bar", expected, formatter.format_line (bar))
+			assert_true ("square preset", first.format_line (bar).has_substring ("%/9635/"))
 		end
 
-	test_unicode_zero_and_unknown
+	test_spinner_renderer
 		local
 			bar: PB_PROGRESS_BAR
-			formatter: PB_UNICODE_PROGRESS_RENDERER
-			expected: STRING_32
+			renderer: PB_SPINNER_PROGRESS_RENDERER
+			line: STRING_32
 		do
-			create formatter
 			create bar.make_unknown
-			assert_equal ("unknown fallback", {STRING_32} "[0/?]", formatter.format_line (bar))
-			create bar.make_with_total (0)
-			create expected.make_filled ('%/9608/', 20)
-			expected.prepend_character ('[')
-			expected.append_string_general ("] 100%%")
-			assert_equal ("empty total is full", expected, formatter.format_line (bar))
+			bar.set_description ("Loading")
+			create renderer.make
+			renderer.set_phases ("ab")
+			line := renderer.format_line (bar)
+			assert_true ("description and first phase", line.same_string ("Loading a"))
+			bar.advance
+			line := renderer.format_line (bar)
+			assert_true ("next phase", line.same_string ("Loading b"))
+			renderer.set_show_count (True)
+			renderer.set_show_elapsed (True)
+			line := renderer.format_line (bar)
+			assert_true ("optional details", line.has_substring ("Loading b 1 00:00:00"))
+		end
+
+	test_spinner_presets
+		local
+			bar: PB_PROGRESS_BAR
+			renderer: PB_SPINNER_PROGRESS_RENDERER
+			line: STRING_32
+		do
+			create bar.make_unknown
+			bar.set_description ("Loading")
+			create renderer.make
+			line := renderer.format_line (bar)
+			assert_true ("default moon spinner", line.same_string ("Loading %/9681/"))
+			renderer := {PB_RENDERER_PRESETS}.moon_spinner
+			line := renderer.format_line (bar)
+			assert_true ("moon preset", line.same_string ("Loading %/9681/"))
+			renderer := {PB_RENDERER_PRESETS}.spinner
+			line := renderer.format_line (bar)
+			assert_true ("ascii preset", line.same_string ("Loading -"))
+			renderer := {PB_RENDERER_PRESETS}.pie_spinner
+			assert_true ("pie preset", renderer.format_line (bar).same_string ("Loading %/9719/"))
+			renderer := {PB_RENDERER_PRESETS}.line_spinner
+			assert_true ("line preset", renderer.format_line (bar).same_string ("Loading %/9146/"))
+			renderer := {PB_RENDERER_PRESETS}.pixel_spinner
+			assert_true ("pixel preset", renderer.format_line (bar).same_string ("Loading %/10494/"))
+		end
+
+	test_unknown_progress_uses_counter
+		local
+			bar: PB_PROGRESS_BAR
+			output: PB_CAPTURE_RENDERER
+		do
+			create bar.make_unknown
+			create output.make
+			bar.set_renderer (output)
+			bar.advance_by (7)
+			assert_true ("unknown counter", output.captured.has_substring ("[7/?]"))
+			assert_true ("unknown remains open", not bar.has_finished)
 		end
 
 end

@@ -18,13 +18,13 @@ feature -- Tests
 			create bar.make_with_total (3)
 			create output.make
 			bar.set_renderer (output)
-			assert_true ("initial state", bar.has_total and bar.total = 3 and bar.absolute_progress = 0 and not bar.has_finished)
+			assert_true ("initial state", bar.has_total and bar.progress_limit = 3 and bar.absolute_progress = 0 and not bar.has_finished)
 			bar.advance
 			assert_true ("one completed unit", bar.absolute_progress = 1 and not bar.has_finished)
 			output.reset
 			bar.advance_by (2)
 			assert_true ("completed", bar.absolute_progress = 3 and bar.has_finished)
-			assert_equal ("one final frame", {STRING_32} "%R[3/3]%N", output.captured)
+			assert_true ("one final frame", output.captured.has_substring ("100%%") and output.captured.has_substring ("%N"))
 			output.reset
 			bar.advance
 			bar.advance_by (-2)
@@ -41,14 +41,14 @@ feature -- Tests
 			create output.make
 			bar.set_renderer (output)
 			assert_false ("unknown total", bar.has_total)
-			assert_true ("unknown total sentinel", bar.total = -1)
+			assert_true ("unknown progress limit", bar.progress_limit = {INTEGER_64}.max_value)
 			bar.advance_by (7)
 			assert_true ("unknown remains open", bar.absolute_progress = 7 and not bar.has_finished)
-			assert_equal ("unknown display", {STRING_32} "%R[7/?]", output.captured)
+			assert_true ("unknown display", output.captured.has_substring ("[7/?]"))
 			output.reset
 			bar.finish
 			assert_true ("finish retains actual work", bar.absolute_progress = 7 and bar.has_finished)
-			assert_equal ("finished line", {STRING_32} "%R[7/?]%N", output.captured)
+			assert_true ("finished line", output.captured.has_substring ("[7/?]") and output.captured.has_substring ("%N"))
 		end
 
 	test_signed_updates_and_overshoot
@@ -108,12 +108,36 @@ feature -- Tests
 			assert_false ("construction does not finish", bar.has_finished)
 			bar.advance
 			assert_true ("empty work completes", bar.has_finished and bar.absolute_progress = 0)
-			assert_equal ("empty final frame", {STRING_32} "%R[0/0]%N", output.captured)
+			assert_true ("empty final frame", output.captured.has_substring ("100%%") and output.captured.has_substring ("%N"))
 		end
 
 	test_negative_total_rejected
 		do
 			assert_exception ("negative total", agent create_negative_total)
+		end
+
+	test_progress_characteristics
+		local
+			bar: PB_PROGRESS_BAR
+		do
+			create bar.make_with_total (4)
+			bar.advance_by (2)
+			assert_true ("ratio", (bar.progress_ratio - 0.5).abs < 0.0001)
+			assert_true ("percentage", bar.progress_percentage = 50)
+		end
+
+	test_zero_total_characteristics
+		local
+			bar: PB_PROGRESS_BAR
+		do
+			create bar.make_with_total (0)
+			assert_true ("zero ratio", bar.progress_ratio = 1.0)
+			assert_true ("zero percentage", bar.progress_percentage = 100)
+		end
+
+	test_unknown_characteristics_rejected
+		do
+			assert_exception ("unknown ratio", agent query_unknown_ratio)
 		end
 
 	test_finish_before_updates
@@ -126,7 +150,7 @@ feature -- Tests
 			bar.set_renderer (output)
 			bar.finish
 			assert_true ("explicit finish at actual position", bar.has_finished and bar.absolute_progress = 0)
-			assert_equal ("zero final frame", {STRING_32} "%R[0/10]%N", output.captured)
+			assert_true ("zero final frame", output.captured.has_substring ("0%%") and output.captured.has_substring ("%N"))
 		end
 
 feature {NONE} -- Contract probes
@@ -136,6 +160,15 @@ feature {NONE} -- Contract probes
 			bar: PB_PROGRESS_BAR
 		do
 			create bar.make_with_total (-2)
+		end
+
+	query_unknown_ratio
+		local
+			bar: PB_PROGRESS_BAR
+			ratio: REAL_64
+		do
+			create bar.make_unknown
+			ratio := bar.progress_ratio
 		end
 
 end

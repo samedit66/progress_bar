@@ -65,12 +65,12 @@ do
 end
 ```
 
-To show several bars at once, connect them via `PB_MULTIPLE_PROGRESS_RENDERER`:
+To show several bars at once, connect them via `PB_PROGRESS_GROUP`:
 
 ```eiffel
 local
     first, second: PB_PROGRESS_BAR
-    group: PB_MULTIPLE_PROGRESS_RENDERER
+    group: PB_PROGRESS_GROUP
 do
     create first.make_with_total (10)
     create second.make_with_total (20)
@@ -87,33 +87,37 @@ finished rows remain visible. Do not replace individual renderers while grouped.
 
 ## Formatting
 
-Each bar starts with its own `PB_BASIC_PROGRESS_RENDERER`, showing `[current/total]`
-or `[current/?]`. The library also provides these renderers, inspired by
-[verigak/progress](https://github.com/verigak/progress):
+Each bar starts with its own `PB_STANDARD_PROGRESS_RENDERER`, showing a configurable
+bar with percentage, elapsed time, and ETA. For unknown work, use
+`PB_SPINNER_PROGRESS_RENDERER` with configurable phases. It defaults to a
+compact Unicode moon spinner such as `Loading ◑`; counters and elapsed time are
+opt-in with `set_show_count` and `set_show_elapsed`.
 
-- `PB_UNICODE_PROGRESS_RENDERER` — partial-block Unicode bar with a percentage;
-- `PB_CHARGING_PROGRESS_RENDERER` — solid blocks with a percentage;
-- `PB_SQUARES_PROGRESS_RENDERER` — filled and empty squares with a percentage;
-- `PB_CIRCLES_PROGRESS_RENDERER` — filled and empty circles with a percentage;
-- `PB_PIXEL_PROGRESS_RENDERER` — braille-pixel bar with a counter;
-- `PB_MOON_SPINNER_RENDERER` — moon-phase spinner for indeterminate work.
+Common styles can be selected through fresh renderer presets such as
+`{PB_RENDERER_PRESETS}.squares`, `{PB_RENDERER_PRESETS}.circles`, and
+`{PB_RENDERER_PRESETS}.pixels`.
+
+Spinner presets include `{PB_RENDERER_PRESETS}.moon_spinner`,
+`{PB_RENDERER_PRESETS}.pie_spinner`, `{PB_RENDERER_PRESETS}.line_spinner`,
+`{PB_RENDERER_PRESETS}.pixel_spinner`, and the ASCII fallback
+`{PB_RENDERER_PRESETS}.spinner`.
 
 To select a renderer:
 
 ```eiffel
-bar.set_renderer (create {PB_UNICODE_PROGRESS_RENDERER})
+local
+    renderer: PB_STANDARD_PROGRESS_RENDERER
+do
+    bar.set_description ("Downloading")
+    create renderer.make
+    renderer.set_fill_character ('=')
+    renderer.set_empty_character ('.')
+    bar.set_renderer (renderer)
+end
 ```
 
-To add elapsed time and ETA to any renderer, wrap it with
-`PB_TIMING_RENDERER`:
-
-```eiffel
-bar.set_renderer (create {PB_TIMING_RENDERER}.make (
-    create {PB_UNICODE_PROGRESS_RENDERER}))
-```
-
-The timing renderer displays `HH:MM:SS ETA HH:MM:SS`. ETA is shown as
-`--:--:--` until a known-total bar has positive progress.
+The standard renderer displays elapsed time as `HH:MM:SS` and ETA as
+`HH:MM:SS`. ETA is shown as `--:--:--` until a known-total bar has positive progress.
 
 To define another presentation, inherit `PB_PROGRESS_RENDERER` and implement
 `format_line (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
@@ -150,12 +154,5 @@ Tests exercise progress bounds, completion, formatters, emitted terminal sequenc
 and grouped output. Test renderers override only `emit`, retaining the production
 rendering behavior. CI runs both compilers on Linux, macOS, and Windows.
 
-## Migration
-
-The current API uses `PB_PROGRESS_BAR` and the `advance` / `advance_by` commands.
-Rendering is provided by renderer classes rather than agents. Use
-`PB_WRAPPED_BAR [G]` when progress should follow an iterable automatically.
-Progress is exposed through the `absolute_progress` query; there is no setter.
-
 See the [tutorial](docs/tutorial.md), [API reference](docs/reference.md), and
-[example](examples/quick_start/application.e).
+[demo application](examples/demo/demo_application.e).

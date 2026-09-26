@@ -1,4 +1,4 @@
-class PB_MULTIPLE_PROGRESS_RENDERER
+class PB_PROGRESS_GROUP
 	-- A fixed group of single-line bars sharing one terminal block.
 	-- Attach distinct bars before their first display. Calls must be sequential.
 	-- Lines must fit the terminal width and the block must fit its height.

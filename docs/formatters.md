@@ -11,7 +11,7 @@ feature
         do
             Result := "Files: " + bar.absolute_progress.out
             if bar.has_total then
-                Result.append_string_general (" / " + bar.total.out)
+                Result.append_string_general (" / " + bar.progress_limit.out)
             end
         end
 end
@@ -24,29 +24,47 @@ bar.set_renderer (create {PB_FILES_RENDERER})
 ```
 
 `format_line` returns one physical line without carriage returns or newlines.
-Check `has_total` before using `total` in a known/unknown display. Use
+Check `has_total` before using `progress_limit` as a displayed total. Use
 `has_finished` if final text should differ from active text. Return a fresh string:
 the single-line renderer may pad and retain the returned string.
 
-The built-in renderers are inspired by the styles in
-[verigak/progress](https://github.com/verigak/progress):
+The built-in `PB_STANDARD_PROGRESS_RENDERER` supports configurable width, fill and
+empty characters, percentage or counter output, description, elapsed time, and ETA.
+Use `PB_SPINNER_PROGRESS_RENDERER` for indeterminate work. It displays the
+description and current phase by default; the progress count and elapsed time can
+be enabled explicitly with `set_show_count` and `set_show_elapsed`.
 
-| Renderer | Style |
-| --- | --- |
-| `PB_BASIC_PROGRESS_RENDERER` | ASCII counter, `[current/total]` or `[current/?]` |
-| `PB_UNICODE_PROGRESS_RENDERER` | Partial-block Unicode bar and percentage |
-| `PB_CHARGING_PROGRESS_RENDERER` | Solid blocks and percentage |
-| `PB_SQUARES_PROGRESS_RENDERER` | Filled/empty squares and percentage |
-| `PB_CIRCLES_PROGRESS_RENDERER` | Filled/empty circles and percentage |
-| `PB_PIXEL_PROGRESS_RENDERER` | Braille-pixel bar and counter |
-| `PB_MOON_SPINNER_RENDERER` | Moon-phase spinner driven by progress updates |
+Common standard styles can be selected without configuring characters manually:
 
-The block renderers show a filled bar for a known total and fall back to a
-counter for an unknown total. The moon spinner is intended for indeterminate
-work and advances its phase as `absolute_progress` changes.
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.squares)
+```
+
+Spinner presets are also available:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.moon_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.pie_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.line_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.pixel_spinner)
+bar.set_renderer ({PB_RENDERER_PRESETS}.spinner) -- ASCII fallback
+```
+
+`PB_SPINNER_PROGRESS_RENDERER.make` uses the Unicode moon phases by default:
+`◑◒◐◓`. The spinner deliberately omits elapsed time, counters, and ETA from its
+default line because ETA is unavailable for unknown work. Enable the count or
+elapsed time when that detail is useful:
+
+```eiffel
+renderer.set_show_count (True)
+renderer.set_show_elapsed (True)
+```
+
+Preset features create a fresh renderer for every call. A renderer owns output
+state and must not be shared between bars.
 
 A renderer owns output state, so create a separate instance for each bar. Set the
-renderer before adding the bar to `PB_MULTIPLE_PROGRESS_RENDERER`. The group retains
+renderer before adding the bar to `PB_PROGRESS_GROUP`. The group retains
 the original renderer as a formatter and calls it whenever *any* row updates.
 Changing a grouped bar's renderer does not merely change its format: it disconnects
 that bar from the formatter captured by the group.
