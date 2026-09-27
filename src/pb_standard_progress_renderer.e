@@ -25,14 +25,17 @@ feature -- Formatting
 	format_line (a_progress_bar: PB_PROGRESS_BAR): STRING_32
 			-- Format a progress bar with description and timing information.
 		local
-			filled, i: INTEGER
+			filled, i, phase_index: INTEGER
 		do
 			create Result.make (width + 32)
 			if not a_progress_bar.description.is_empty then
 				Result.append (a_progress_bar.description)
 				Result.extend (' ')
 			end
-			if not a_progress_bar.has_total then
+			if attached stack_phases as l_phases and a_progress_bar.has_total then
+				phase_index := (a_progress_bar.progress_ratio * (l_phases.count - 1)).floor + 1
+				Result.extend (l_phases [phase_index])
+			elseif not a_progress_bar.has_total then
 				Result.append_string_general ("[" + a_progress_bar.absolute_progress.out + "/?]")
 			else
 				filled := (a_progress_bar.progress_ratio * width).floor
@@ -87,6 +90,14 @@ feature -- Settings
 			show_percentage := a_show_percentage
 		end
 
+	set_stack_phases (a_phases: READABLE_STRING_GENERAL)
+			-- Set the phases used by the compact stack style.
+		require
+			not_empty: not a_phases.is_empty
+		do
+			stack_phases := a_phases.as_string_32
+		end
+
 feature {NONE} -- Implementation
 
 	width: INTEGER
@@ -100,5 +111,8 @@ feature {NONE} -- Implementation
 
 	show_percentage: BOOLEAN
 			-- Should known progress be displayed as a percentage?
+
+	stack_phases: detachable STRING_32
+			-- Optional phases used to display progress as one stack glyph.
 
 end

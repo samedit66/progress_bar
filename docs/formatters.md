@@ -60,6 +60,18 @@ renderer.set_show_count (True)
 renderer.set_show_elapsed (True)
 ```
 
+Compact value presets are available for counters and known totals:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.counter)   -- Processing 42
+bar.set_renderer ({PB_RENDERER_PRESETS}.countdown)  -- Processing 8 left
+bar.set_renderer ({PB_RENDERER_PRESETS}.stack)      -- Processing ▃
+```
+
+`counter` displays the current count and works with known or unknown progress.
+`countdown` displays the remaining count; for unknown work it displays `? left`.
+`stack` displays known progress as one glyph using the phases `▁▂▃▄▅▆▇█`.
+
 Preset features create a fresh renderer for every call. A renderer owns output
 state and must not be shared between bars.
 

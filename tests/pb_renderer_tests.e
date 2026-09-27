@@ -120,6 +120,36 @@ feature -- Tests
 			assert_true ("pixel preset", renderer.format_line (bar).same_string ("Loading %/10494/"))
 		end
 
+	test_compact_progress_presets
+		local
+			unknown_bar, known_bar: PB_PROGRESS_BAR
+			counter, countdown: PB_SPINNER_PROGRESS_RENDERER
+			stack: PB_STANDARD_PROGRESS_RENDERER
+			line: STRING_32
+		do
+			create unknown_bar.make_unknown
+			unknown_bar.set_description ("Processing")
+			unknown_bar.advance_by (42)
+			counter := {PB_RENDERER_PRESETS}.counter
+			line := counter.format_line (unknown_bar)
+			assert_true ("counter preset", line.same_string ("Processing 42"))
+
+			create known_bar.make_with_total (10)
+			known_bar.set_description ("Processing")
+			known_bar.advance_by (3)
+			countdown := {PB_RENDERER_PRESETS}.countdown
+			line := countdown.format_line (known_bar)
+			assert_true ("countdown preset", line.same_string ("Processing 7 left"))
+			known_bar.set_renderer (countdown)
+			known_bar.advance
+			line := countdown.format_line (known_bar)
+			assert_true ("countdown advances", line.same_string ("Processing 6 left"))
+
+			stack := {PB_RENDERER_PRESETS}.stack
+			line := stack.format_line (known_bar)
+			assert_true ("stack preset", line.has_substring ("Processing %/9603/"))
+		end
+
 	test_unknown_progress_uses_counter
 		local
 			bar: PB_PROGRESS_BAR

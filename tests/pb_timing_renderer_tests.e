@@ -39,4 +39,19 @@ feature -- Tests
 			assert_false ("unknown has no eta", bar.has_eta)
 		end
 
+	test_countdown_handles_unknown_progress
+		local
+			bar: PB_PROGRESS_BAR
+			renderer: PB_SPINNER_PROGRESS_RENDERER
+			line: STRING_32
+		do
+			create bar.make_unknown
+			bar.set_description ("Processing")
+			create renderer.make
+			renderer.set_show_phase (False)
+			renderer.set_show_remaining (True)
+			line := renderer.format_line (bar)
+			assert_true ("unknown countdown", line.same_string ("Processing ? left"))
+		end
+
 end

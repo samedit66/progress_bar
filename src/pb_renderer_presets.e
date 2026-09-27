@@ -53,6 +53,26 @@ feature -- Standard renderers
 
 feature -- Spinner renderers
 
+	counter: PB_SPINNER_PROGRESS_RENDERER
+			-- Create a renderer showing the current progress count.
+		do
+			create Result.make
+			Result.set_show_phase (False)
+			Result.set_show_count (True)
+		ensure
+			instance_free: class
+		end
+
+	countdown: PB_SPINNER_PROGRESS_RENDERER
+			-- Create a renderer showing the remaining progress count.
+		do
+			create Result.make
+			Result.set_show_phase (False)
+			Result.set_show_remaining (True)
+		ensure
+			instance_free: class
+		end
+
 	spinner: PB_SPINNER_PROGRESS_RENDERER
 			-- Create a renderer using ASCII spinner phases.
 		do
@@ -94,6 +114,17 @@ feature -- Spinner renderers
 		do
 			create Result.make
 			Result.set_phases ("%/10494/%/10487/%/10479/%/10463/%/10367/%/10431/%/10491/%/10493/")
+		ensure
+			instance_free: class
+		end
+
+feature -- Compact standard renderers
+
+	stack: PB_STANDARD_PROGRESS_RENDERER
+			-- Create a renderer showing progress as one stack glyph.
+		do
+			Result := standard
+			Result.set_stack_phases ("%/32/%/9601/%/9602/%/9603/%/9604/%/9605/%/9606/%/9607/%/9608/")
 		ensure
 			instance_free: class
 		end

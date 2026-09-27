@@ -100,6 +100,19 @@ Its default output is compact, for example `Loading ◑`. Use
 `set_show_count (True)` and `set_show_elapsed (True)` to include the current
 count and elapsed time when needed. Each preset call creates a new renderer.
 
+Compact value presets are also available:
+
+```eiffel
+bar.set_renderer ({PB_RENDERER_PRESETS}.counter)   -- Processing 42
+bar.set_renderer ({PB_RENDERER_PRESETS}.countdown)  -- Processing 8 left
+bar.set_renderer ({PB_RENDERER_PRESETS}.stack)      -- Processing ▃
+```
+
+`counter` shows the current count, `countdown` shows remaining known work, and
+`stack` shows the progress ratio as one of the stack phases `▁▂▃▄▅▆▇█`.
+Unknown progress is rendered as `? left` by `countdown` and as the normal
+unknown-total form by `stack`.
+
 Each preset call creates a new renderer. Do not share one renderer between bars.
 
 It displays elapsed time and ETA as `HH:MM:SS`. Unknown totals and bars with

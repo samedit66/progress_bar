@@ -102,6 +102,9 @@ Spinner presets include `{PB_RENDERER_PRESETS}.moon_spinner`,
 `{PB_RENDERER_PRESETS}.pixel_spinner`, and the ASCII fallback
 `{PB_RENDERER_PRESETS}.spinner`.
 
+Compact value presets include `{PB_RENDERER_PRESETS}.counter`,
+`{PB_RENDERER_PRESETS}.countdown`, and `{PB_RENDERER_PRESETS}.stack`.
+
 To select a renderer:
 
 ```eiffel

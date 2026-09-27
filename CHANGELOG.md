@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Added `counter`, `countdown`, and `stack` renderer presets for compact value
+  and progress displays.
+- Added phase visibility and remaining-value configuration to
+  `PB_SPINNER_PROGRESS_RENDERER`.
+- Added compact stack phase configuration to
+  `PB_STANDARD_PROGRESS_RENDERER`.
+
 ## [1.0.0] - 2026-09-27
 
 ### Added
