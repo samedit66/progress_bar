@@ -14,7 +14,7 @@ feature {NONE} -- Initialization
 			width := 20
 			fill_character := '#'
 			empty_character := ' '
-			show_phases := True
+			show_phases := False
 			show_percentage := True
 		end
 
@@ -101,13 +101,16 @@ feature -- Formatting
 feature {NONE} -- Formatting details
 
 	format_known (a_result: STRING_32; a_bar: PB_PROGRESS_BAR)
+		local
+			filled: INTEGER_64
 		do
 			if show_phases then
 				a_result.append_character (phases [phase_index (a_bar)])
 			elseif not show_remaining then
+				filled := (width * a_bar.progress_ratio).floor
 				a_result.append_character ('[')
-				append_n_character (a_result, (width * a_bar.progress_ratio).floor, fill_character)
-				append_n_character (a_result, (width * (1 - a_bar.progress_ratio)).floor, empty_character)
+				append_n_character (a_result, filled, fill_character)
+				append_n_character (a_result, width - filled, empty_character)
 				a_result.append_character (']')
 			end
 			if not (show_remaining and not show_phases) then

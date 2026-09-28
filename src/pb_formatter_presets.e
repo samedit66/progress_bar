@@ -81,6 +81,7 @@ feature -- Spinner formatters
 		do
 			create Result.make
 			Result.set_phases ("%/45/%/92/%/124/%/47/")
+			Result.set_show_phases (True)
 		ensure
 			instance_free: class
 		end
@@ -90,6 +91,7 @@ feature -- Spinner formatters
 		do
 			create Result.make
 			Result.set_phases ("%/9719/%/9718/%/9717/%/9716/")
+			Result.set_show_phases (True)
 		ensure
 			instance_free: class
 		end
@@ -99,6 +101,7 @@ feature -- Spinner formatters
 		do
 			create Result.make
 			Result.set_phases ("%/9681/%/9682/%/9680/%/9683/")
+			Result.set_show_phases (True)
 		ensure
 			instance_free: class
 		end
@@ -108,6 +111,7 @@ feature -- Spinner formatters
 		do
 			create Result.make
 			Result.set_phases ("%/9146/%/9147/%/9148/%/9149/%/9148/%/9147/")
+			Result.set_show_phases (True)
 		ensure
 			instance_free: class
 		end
@@ -117,6 +121,7 @@ feature -- Spinner formatters
 		do
 			create Result.make
 			Result.set_phases ("%/10494/%/10487/%/10479/%/10463/%/10367/%/10431/%/10491/%/10493/")
+			Result.set_show_phases (True)
 		ensure
 			instance_free: class
 		end

@@ -61,6 +61,30 @@ feature -- Tests
 			assert_true ("configured bar", formatter.format (bar).has_substring ("[==--] 2/4"))
 		end
 
+	test_default_formatter_is_a_bar
+		local
+			bar: PB_PROGRESS_BAR
+			formatter: PB_FORMATTER
+		do
+			create bar.make_with_total (2)
+			create formatter.make
+			bar.set_formatter (formatter)
+			bar.advance
+			assert_true ("default formatter uses cells", formatter.format (bar).has_substring ("[##########          ] 50%%"))
+		end
+
+	test_known_progress_keeps_configured_width
+		local
+			bar: PB_PROGRESS_BAR
+			formatter: PB_FORMATTER
+		do
+			create bar.make_with_total (20)
+			create formatter.make
+			bar.set_formatter (formatter)
+			bar.advance_by (16)
+			assert_true ("bar width is stable", formatter.format (bar).has_substring ("[################    ] 80%%"))
+		end
+
 	test_formatter_presets_create_independent_formatters
 		local
 			first, second: PB_FORMATTER
@@ -85,6 +109,7 @@ feature -- Tests
 			bar.set_description ("Loading")
 			create formatter.make
 			formatter.set_phases ("ab")
+			formatter.set_show_phases (True)
 			line := formatter.format (bar)
 			assert_true ("description and first phase", line.same_string ("Loading a"))
 			bar.advance
@@ -106,7 +131,7 @@ feature -- Tests
 			bar.set_description ("Loading")
 			create formatter.make
 			line := formatter.format (bar)
-			assert_true ("default moon spinner", line.same_string ("Loading %/9681/"))
+			assert_true ("default formatter is not a spinner", line.same_string ("Loading "))
 			formatter := {PB_FORMATTER_PRESETS}.moon_spinner
 			line := formatter.format (bar)
 			assert_true ("moon preset", line.same_string ("Loading %/9681/"))
