@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+The library is moving toward a smaller separation of concerns: one display
+coordinates terminal output, while one configurable formatter describes bar
+state. Grouped progress remains extensible through the display output hook.
+
+### Changed
+
+- Replaced `PB_PROGRESS_GROUP` and progress renderer classes with `PB_DISPLAY`
+  and the single configurable `PB_FORMATTER` API.
+- Renamed renderer presets to `PB_FORMATTER_PRESETS` and preserved the existing
+  standard, spinner, counter, countdown, stack, and character presets.
+- Added the protected `PB_DISPLAY.emit` extension point for redirected output.
+- Updated the demo, documentation, formatting recipe, and tests for the new
+  breaking API.
+
 ## [1.0.0] - 2026-09-27
 
 ### Added

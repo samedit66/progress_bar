@@ -50,8 +50,8 @@ explicit `finish` after traversal.
 
 ## Grouped work
 
-Create all bars, install any custom renderers, and create a
-`PB_PROGRESS_GROUP` over them before any output. Update the bars in
+Create all bars, install any custom formatters, and create a
+`PB_DISPLAY` over them before any output. Update the bars in
 any order; all rows stay visible and completion is independent. Use `put_line`
 on a grouped bar to print messages above the block.
 

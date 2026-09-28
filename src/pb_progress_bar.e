@@ -13,9 +13,7 @@ feature {NONE} -- Initialization
 		require
 			valid_total: a_total >= 0
 		do
-			progress_limit := a_total
-			has_total := True
-			initialize
+			initialize (a_total, True)
 		ensure
 			total_set: progress_limit = a_total
 			total_is_known: has_total
@@ -26,9 +24,7 @@ feature {NONE} -- Initialization
 	make_unknown
 			-- Make a progress bar without a known total.
 		do
-			progress_limit := {INTEGER_64}.max_value
-			has_total := False
-			initialize
+			initialize ({INTEGER_64}.max_value, False)
 		ensure
 			unknown_total: not has_total
 			maximum_progress_limit: progress_limit = {INTEGER_64}.max_value
@@ -36,24 +32,21 @@ feature {NONE} -- Initialization
 			no_progress_made_so_far: absolute_progress = 0
 		end
 
-	initialize
-			-- Initialize the common bar state and default renderer.
+	initialize (a_limit: INTEGER_64; a_has_total: BOOLEAN)
 		do
+			progress_limit := a_limit
+			has_total := a_has_total
 			create description.make_empty
 			create clock.make
 			clock.start
-			create {PB_STANDARD_PROGRESS_RENDERER} renderer.make
+			create {PB_FORMATTER} formatter.make
+			formatter.set_show_phases (False)
+			formatter.set_show_elapsed (True)
+			create display.make
+			display.extend (Current)
 		end
 
 feature -- Commands
-
-	start
-			-- Restart the bar at zero and render it.
-		do
-			absolute_progress := 0
-			has_finished := False
-			render
-		end
 
 	advance
 			-- Advance the bar by 1.
@@ -68,7 +61,6 @@ feature -- Commands
 		do
 			if not has_finished then
 				remaining := progress_limit - absolute_progress
-
 				if a_count > remaining then
 					absolute_progress := progress_limit
 				elseif a_count < -absolute_progress then
@@ -76,7 +68,6 @@ feature -- Commands
 				else
 					absolute_progress := (absolute_progress + a_count).max (0)
 				end
-
 				if has_total and then absolute_progress = progress_limit then
 					finish
 				else
@@ -97,10 +88,16 @@ feature -- Commands
 			end
 		end
 
-	set_renderer (a_renderer: PB_PROGRESS_RENDERER)
-			-- Set a renderer for the bar.
+	render
+			-- Render the bar.
 		do
-		renderer := a_renderer
+			display.render
+		end
+
+	put_line (a_string: READABLE_STRING_GENERAL)
+			-- Print `a_string` above the progress bar.
+		do
+			display.put_line (a_string)
 		end
 
 	set_description (a_description: READABLE_STRING_GENERAL)
@@ -109,16 +106,10 @@ feature -- Commands
 			description := a_description.as_string_32
 		end
 
-	render
-			-- Render the bar.
+	set_formatter (a_formatter: PB_FORMATTER)
+			-- Set the formatter used for this bar.
 		do
-			renderer.render (Current)
-		end
-
-	put_line (a_string: READABLE_STRING_GENERAL)
-			-- Print `a_string` above the progress bar.
-		do
-			renderer.put_line (a_string)
+			formatter := a_formatter
 		end
 
 feature -- Status report
@@ -129,6 +120,12 @@ feature -- Status report
 	has_finished: BOOLEAN
 			-- Has the bar finished?
 
+	has_eta: BOOLEAN
+			-- Is an ETA available for the current progress?
+		do
+			Result := has_total and then progress_limit > 0 and then absolute_progress > 0
+		end
+
 feature -- Measurement
 
 	description: STRING_32
@@ -138,12 +135,6 @@ feature -- Measurement
 			-- Whole seconds elapsed since creation.
 		do
 			Result := clock.elapsed_seconds
-		end
-
-	has_eta: BOOLEAN
-			-- Is an ETA available for the current progress?
-		do
-			Result := has_total and then progress_limit > 0 and then absolute_progress > 0
 		end
 
 	progress_ratio: REAL_64
@@ -187,19 +178,35 @@ feature -- Measurement
 	absolute_progress: INTEGER_64
 			-- Absolute progress.
 
-	renderer: PB_PROGRESS_RENDERER
-			-- Attached renderer.
+	formatter: PB_FORMATTER
+			-- Formatter used to produce the bar's display line.
+
+feature {PB_DISPLAY}
+
+	set_display (a_display: PB_DISPLAY)
+			-- Attach the bar to `a_display`.
+		do
+			display := a_display
+		end
+
+	formatted: STRING_32
+			-- Return this bar formatted as one display line.
+		do
+			Result := formatter.format (Current)
+		end
 
 feature {NONE} -- Implementation
 
 	clock: PB_CLOCK_IMP
 			-- Clock measuring this bar's lifetime.
 
+	display: PB_DISPLAY
+			-- Display receiving this bar's output.
+
 invariant
 
 	positive_progress_limit: progress_limit >= 0
-	unknown_uses_maximum_limit: not has_total implies
-		progress_limit = {INTEGER_64}.max_value
+	unknown_uses_maximum_limit: not has_total implies progress_limit = {INTEGER_64}.max_value
 	non_negative_progress: absolute_progress >= 0
 	progress_within_limit: absolute_progress <= progress_limit
 

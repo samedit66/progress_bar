@@ -23,14 +23,14 @@ feature {NONE} -- Implementation
 	show_bar (a_name: STRING; a_fill, a_empty: CHARACTER_32)
 		local
 			bar: PB_PROGRESS_BAR
-			renderer: PB_STANDARD_PROGRESS_RENDERER
+			formatter: PB_FORMATTER
 		do
 			create bar.make_with_total (20)
-			create renderer.make
-			renderer.set_fill_character (a_fill)
-			renderer.set_empty_character (a_empty)
+			create formatter.make
+			formatter.set_fill_character (a_fill)
+			formatter.set_empty_character (a_empty)
 			bar.set_description (a_name)
-			bar.set_renderer (renderer)
+			bar.set_formatter (formatter)
 			from
 			until
 				bar.has_finished
@@ -44,14 +44,18 @@ feature {NONE} -- Implementation
 			-- Show a phase-based spinner bar.
 		local
 			bar: PB_PROGRESS_BAR
-			renderer: PB_SPINNER_PROGRESS_RENDERER
+			formatter: PB_FORMATTER
 			i: INTEGER
 		do
 			create bar.make_unknown
 			bar.set_description ("Loading")
-			create renderer.make
-			bar.set_renderer (renderer)
-			from until i = 7 loop
+			create formatter.make
+			formatter.set_show_phases (True)
+			bar.set_formatter (formatter)
+			from
+			until
+				i = 7
+			loop
 				bar.advance
 				pause
 				i := i + 1
@@ -83,12 +87,14 @@ feature {NONE} -- Implementation
 			-- Show an outer operation advancing around a longer inner operation.
 		local
 			outer, inner: PB_PROGRESS_BAR
-			group: PB_PROGRESS_GROUP
+			display: PB_DISPLAY
 			i: INTEGER
 		do
 			create outer.make_with_total (6)
 			create inner.make_with_total (60)
-			create group.make (<<outer, inner>>)
+			create display.make
+			display.extend (outer)
+			display.extend (inner)
 			from
 				i := 1
 			until

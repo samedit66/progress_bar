@@ -9,7 +9,7 @@
 Terminal progress bars for Eiffel. Void-safe, ELKS-only, with synchronous output
 to standard output and support for EiffelStudio and Gobo.
 
-![Renderer showcase](examples/demo/demo.gif)
+![Formatter showcase](examples/demo/demo.gif)
 
 </div>
 
@@ -65,65 +65,66 @@ do
 end
 ```
 
-To show several bars at once, connect them via `PB_PROGRESS_GROUP`:
+To show several bars at once, connect them via `PB_DISPLAY`:
 
 ```eiffel
 local
     first, second: PB_PROGRESS_BAR
-    group: PB_PROGRESS_GROUP
+    display: PB_DISPLAY
 do
     create first.make_with_total (10)
     create second.make_with_total (20)
-    create group.make (<< first, second >>)
+    create display.make
+    display.extend (first)
+    display.extend (second)
     first.advance
     second.advance_by (3)
     first.put_line ("Working")
 end
 ```
 
-Create a fixed group before any of its bars are displayed. Configure each bar's
-renderer before grouping. Every update redraws the group in the supplied order;
-finished rows remain visible. Do not replace individual renderers while grouped.
+Create a display before its bars are displayed. Every update redraws the bars in
+the order supplied to `extend`; finished rows remain visible.
 
 ## Formatting
 
-Each bar starts with its own `PB_STANDARD_PROGRESS_RENDERER`, showing a configurable
+Each bar starts with its own `PB_FORMATTER`, showing a configurable
 bar with percentage, elapsed time, and ETA. For unknown work, use
-`PB_SPINNER_PROGRESS_RENDERER` with configurable phases. It defaults to a
+`PB_FORMATTER` with configurable phases. It defaults to a
 compact Unicode moon spinner such as `Loading ◑`; counters and elapsed time are
 opt-in with `set_show_count` and `set_show_elapsed`.
 
-Common styles can be selected through fresh renderer presets such as
-`{PB_RENDERER_PRESETS}.squares`, `{PB_RENDERER_PRESETS}.circles`, and
-`{PB_RENDERER_PRESETS}.pixels`.
+Common styles can be selected through fresh formatter presets such as
+`{PB_FORMATTER_PRESETS}.squares`, `{PB_FORMATTER_PRESETS}.circles`, and
+`{PB_FORMATTER_PRESETS}.pixels`.
 
-Spinner presets include `{PB_RENDERER_PRESETS}.moon_spinner`,
-`{PB_RENDERER_PRESETS}.pie_spinner`, `{PB_RENDERER_PRESETS}.line_spinner`,
-`{PB_RENDERER_PRESETS}.pixel_spinner`, and the ASCII fallback
-`{PB_RENDERER_PRESETS}.spinner`.
+Spinner presets include `{PB_FORMATTER_PRESETS}.moon_spinner`,
+`{PB_FORMATTER_PRESETS}.pie_spinner`, `{PB_FORMATTER_PRESETS}.line_spinner`,
+`{PB_FORMATTER_PRESETS}.pixel_spinner`, and the ASCII fallback
+`{PB_FORMATTER_PRESETS}.spinner`.
 
-Compact value presets include `{PB_RENDERER_PRESETS}.counter`,
-`{PB_RENDERER_PRESETS}.countdown`, and `{PB_RENDERER_PRESETS}.stack`.
+Compact value presets include `{PB_FORMATTER_PRESETS}.counter`,
+`{PB_FORMATTER_PRESETS}.countdown`, and `{PB_FORMATTER_PRESETS}.stack`.
 
-To select a renderer:
+To select a formatter:
 
 ```eiffel
 local
-    renderer: PB_STANDARD_PROGRESS_RENDERER
+    formatter: PB_FORMATTER
 do
     bar.set_description ("Downloading")
-    create renderer.make
-    renderer.set_fill_character ('=')
-    renderer.set_empty_character ('.')
-    bar.set_renderer (renderer)
+    create formatter.make
+    formatter.set_fill_character ('=')
+    formatter.set_empty_character ('.')
+    bar.set_formatter (formatter)
 end
 ```
 
-The standard renderer displays elapsed time as `HH:MM:SS` and ETA as
-`HH:MM:SS`. ETA is shown as `--:--:--` until a known-total bar has positive progress.
+The standard formatter displays elapsed time as `HH:MM:SS` and shows ETA after a
+known-total bar has positive progress.
 
-To define another presentation, inherit `PB_PROGRESS_RENDERER` and implement
-`format_line (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
+To define another presentation, inherit `PB_FORMATTER` and implement
+`format (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
 See [formatters](docs/formatters.md).
 
 ## Installation
@@ -147,15 +148,15 @@ Install `just`, Gobo, and EiffelStudio. `GOBO` defaults to `~/Projects/gobo`;
 - `just check`: analyze the library and example with both compilers.
 - `just format`: format Eiffel source files.
 
-The renderer showcase is implemented in
+The formatter showcase is implemented in
 [examples/demo/demo_application.e](examples/demo/demo_application.e) and uses
 the configuration in [examples/demo/demo.ecf](examples/demo/demo.ecf). The GIF
 is a real terminal capture made with [VHS](https://github.com/charmbracelet/vhs)
 from the tape in [examples/demo/demo.tape](examples/demo/demo.tape).
 
 Tests exercise progress bounds, completion, formatters, emitted terminal sequences,
-and grouped output. Test renderers override only `emit`, retaining the production
-rendering behavior. CI runs both compilers on Linux, macOS, and Windows.
+and grouped output. Test displays override only `emit`, retaining the production
+display behavior. CI runs both compilers on Linux, macOS, and Windows.
 
 See the [tutorial](docs/tutorial.md), [API reference](docs/reference.md), and
 [demo application](examples/demo/demo_application.e).
