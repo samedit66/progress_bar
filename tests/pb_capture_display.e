@@ -1,9 +1,9 @@
-class PB_CAPTURE_RENDERER
-	-- Exercise the real single-line renderer while retaining terminal output.
+class PB_CAPTURE_DISPLAY
+	-- Capture a display's output for tests.
 
 inherit
 
-	PB_STANDARD_PROGRESS_RENDERER
+	PB_DISPLAY
 		redefine
 			make,
 			emit
@@ -24,10 +24,10 @@ feature {NONE} -- Initialization
 feature -- Access
 
 	captured: STRING_32
-
-feature -- Commands
+			-- Captured display output.
 
 	reset
+			-- Discard captured output.
 		do
 			captured.wipe_out
 		end

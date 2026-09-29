@@ -15,7 +15,7 @@ build:
 
 # Format all Eiffel sources.
 format:
-    for source in src/*.e src/renders/*.e tests/*.e examples/*/*.e; do (cd "$(dirname "$source")" && GOBO_EIFFEL=ge "{{ gedoc }}" --silent --force "$(basename "$source")") || exit; done
+    for source in src/*.e tests/*.e examples/*/*.e; do (cd "$(dirname "$source")" && GOBO_EIFFEL=ge "{{ gedoc }}" --silent --force "$(basename "$source")") || exit; done
 
 # Generate the Eiffel test classes used by both backends.
 generate-tests:

@@ -20,9 +20,9 @@ create
 feature {NONE}
 
 	wrap (a_iterable: ITERABLE [G])
-			-- Wraps a progress bar around the given iterable.
-			-- Automatically finds out whether the given `a_iterable` is a descendant of `FINITE`,
-			-- and if it is, creates a bar with a known total.
+			-- Wrap a progress bar around `a_iterable`.
+			-- Finite iterables create a known-total bar; other iterables create an
+			-- unknown-total bar that must be finished explicitly after traversal.
 		do
 			original_iterable := a_iterable
 			if attached {FINITE [G]} a_iterable as finite then
@@ -35,6 +35,7 @@ feature {NONE}
 feature -- Access
 
 	new_cursor: PB_ITERATION_CURSOR [G]
+			-- Create a cursor that advances this bar with each `forth` call.
 		do
 			create Result.make (original_iterable, Current)
 		end

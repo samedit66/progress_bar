@@ -2,13 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
-## [1.0.0] - 2026-09-27
+## [1.0.0] - 2026-09-29
 
 ### Added
 
+- Replaced `PB_PROGRESS_GROUP` and progress renderer classes with `PB_DISPLAY`
+  and the single configurable `PB_FORMATTER` API.
+- Renamed renderer presets to `PB_FORMATTER_PRESETS` and preserved the existing
+  standard, spinner, counter, countdown, stack, and character presets.
+- Added the protected `PB_DISPLAY.emit` extension point for redirected output.
 - Added spinner presets for ASCII, pie, moon, line, and Braille pixel phases.
-- Added `set_show_count` and `set_show_elapsed` to
-  `PB_SPINNER_PROGRESS_RENDERER`.
+- Added `set_show_count` and `set_show_timing` to `PB_FORMATTER`.
 - Added `counter`, `countdown`, and `stack` renderer presets for compact value
   and progress displays.
 - Added phase visibility and remaining-value configuration to
@@ -18,18 +22,23 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-- `PB_SPINNER_PROGRESS_RENDERER.make` now uses Unicode moon phases by default.
-- Spinner output is compact by default: it shows the description and current
-  phase without a counter, elapsed time, or unavailable ETA.
+- Updated the demo, documentation, formatting recipe, tests, and README for
+  the new API and formatter set.
+- Updated the demo recording with the message output example.
+- `PB_FORMATTER.make` now uses ASCII phases and elapsed timing by default for
+  unknown totals.
+- Compact counter, countdown, and spinner presets disable timing by default.
+- Progress display output now clears terminal rows before redrawing bars or
+  messages, preserving clean output when line lengths change.
 
 ### Compatibility notes
 
 - This release changes the default spinner output and is therefore a breaking
   release for applications that snapshot or parse terminal output.
-- Applications that need the previous ASCII phase sequence can use
-  `{PB_RENDERER_PRESETS}.spinner`.
-- Applications that need the previous counter or elapsed time can enable them
-  explicitly with `set_show_count (True)` and `set_show_elapsed (True)`.
+- Applications that need a different phase sequence can use
+  `{PB_FORMATTER_PRESETS}.spinner` or another formatter preset.
+- Applications that need to hide elapsed time can use
+  `set_show_timing (False)`.
 
 ## [0.2.0] - 2026-09-24
 

@@ -1,82 +1,45 @@
-# Custom formatting
+# Formatters
 
-Inherit `PB_PROGRESS_RENDERER` and implement the `format_line` feature:
+`PB_FORMATTER` converts a bar state into one physical line. It does not write
+to the terminal. Configure one formatter and attach it with `set_formatter`:
 
 ```eiffel
-class PB_FILES_RENDERER
-inherit
-    PB_PROGRESS_RENDERER
-feature
-    format_line (bar: PB_PROGRESS_BAR): STRING_32
-        do
-            Result := "Files: " + bar.absolute_progress.out
-            if bar.has_total then
-                Result.append_string_general (" / " + bar.progress_limit.out)
-            end
-        end
+local
+    formatter: PB_FORMATTER
+do
+    create formatter.make
+    formatter.set_width (30)
+    formatter.set_fill_character ('=')
+    formatter.set_empty_character ('.')
+    bar.set_formatter (formatter)
 end
 ```
 
-Install it before displaying the bar:
+Known totals use a 30-cell bar by default. Set `set_width` to change its width,
+or `set_show_percentage (False)` to
+show `count/total`, or `set_show_remaining (True)` to show remaining work.
+Set `set_show_phases_for_known (True)` to show one phase character instead of
+cells for a known total.
+
+Unknown totals use phase characters by default. Set `set_show_count (True)` to
+include the current count. Use `set_show_phases_for_unknown (False)` to hide
+the phase character. Timing is enabled by default; use `set_show_timing (False)`
+to hide elapsed time. Known-total bars also show ETA when progress is positive.
+
+`PB_FORMATTER_PRESETS` creates independent configured formatters:
 
 ```eiffel
-bar.set_renderer (create {PB_FILES_RENDERER})
+bar.set_formatter ({PB_FORMATTER_PRESETS}.squares)
+bar.set_formatter ({PB_FORMATTER_PRESETS}.moon_spinner)
+bar.set_formatter ({PB_FORMATTER_PRESETS}.counter)
+bar.set_formatter ({PB_FORMATTER_PRESETS}.countdown)
+bar.set_formatter ({PB_FORMATTER_PRESETS}.stack)
 ```
 
-`format_line` returns one physical line without carriage returns or newlines.
-Check `has_total` before using `progress_limit` as a displayed total. Use
-`has_finished` if final text should differ from active text. Return a fresh string:
-the single-line renderer may pad and retain the returned string.
+The `counter`, `countdown`, and spinner presets omit elapsed timing for compact
+output. The `standard` and character presets retain the standard timing; call
+`set_show_timing (False)` when a compact character bar is required.
 
-The built-in `PB_STANDARD_PROGRESS_RENDERER` supports configurable width, fill and
-empty characters, percentage or counter output, description, elapsed time, and ETA.
-Use `PB_SPINNER_PROGRESS_RENDERER` for indeterminate work. It displays the
-description and current phase by default; the progress count and elapsed time can
-be enabled explicitly with `set_show_count` and `set_show_elapsed`.
-
-Common standard styles can be selected without configuring characters manually:
-
-```eiffel
-bar.set_renderer ({PB_RENDERER_PRESETS}.squares)
-```
-
-Spinner presets are also available:
-
-```eiffel
-bar.set_renderer ({PB_RENDERER_PRESETS}.moon_spinner)
-bar.set_renderer ({PB_RENDERER_PRESETS}.pie_spinner)
-bar.set_renderer ({PB_RENDERER_PRESETS}.line_spinner)
-bar.set_renderer ({PB_RENDERER_PRESETS}.pixel_spinner)
-bar.set_renderer ({PB_RENDERER_PRESETS}.spinner) -- ASCII fallback
-```
-
-`PB_SPINNER_PROGRESS_RENDERER.make` uses the Unicode moon phases by default:
-`◑◒◐◓`. The spinner deliberately omits elapsed time, counters, and ETA from its
-default line because ETA is unavailable for unknown work. Enable the count or
-elapsed time when that detail is useful:
-
-```eiffel
-renderer.set_show_count (True)
-renderer.set_show_elapsed (True)
-```
-
-Compact value presets are available for counters and known totals:
-
-```eiffel
-bar.set_renderer ({PB_RENDERER_PRESETS}.counter)   -- Processing 42
-bar.set_renderer ({PB_RENDERER_PRESETS}.countdown)  -- Processing 8 left
-bar.set_renderer ({PB_RENDERER_PRESETS}.stack)      -- Processing ▃
-```
-
-`counter` displays the current count and works with known or unknown progress.
-`countdown` displays the remaining count; for unknown work it displays `? left`.
-`stack` displays known progress as one glyph using the phases `▁▂▃▄▅▆▇█`.
-
-Preset features create a fresh renderer for every call. A renderer owns output
-state and must not be shared between bars.
-
-A renderer owns output state, so create a separate instance for each bar. Set the
-renderer before adding the bar to `PB_PROGRESS_GROUP`. The group retains
-the original renderer as a formatter and calls it whenever *any* row updates.
-Changing a grouped bar's renderer does not merely change its format: it disconnects
-that bar from the formatter captured by the group.
+To define another presentation, inherit `PB_FORMATTER` and implement
+`format (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line and leave
+terminal output to `PB_DISPLAY`.

@@ -9,7 +9,7 @@
 Terminal progress bars for Eiffel. Void-safe, ELKS-only, with synchronous output
 to standard output and support for EiffelStudio and Gobo.
 
-![Renderer showcase](examples/demo/demo.gif)
+![Formatter showcase](examples/demo/demo.gif)
 
 </div>
 
@@ -22,14 +22,19 @@ local
     bar: PB_PROGRESS_BAR
 do
     create bar.make_with_total (10)
-    from until bar.has_finished loop
-        do_work
+
+    from
+    until
+        bar.has_finished
+    loop
+        {EXECUTION_ENVIRONMENT}.sleep (100_000_000) -- Imitate some long work
+
         bar.advance -- Same as `bar.advance_by (1)`
     end
 end
 ```
 
-Replace `do_work` with your operation. Reaching the total finishes the bar.
+Reaching the total finishes the bar.
 
 Use `PB_WRAPPED_BAR [G]`, inspired by Python's [tqdm](https://github.com/tqdm/tqdm),
 to wrap an existing iterable. A finite iterable supplies the bar's total; an
@@ -41,8 +46,15 @@ local
 do
     create bar.wrap (<< "this", "and that", "and also that" >>)
 
-    across bar as item loop
-        do_work (item) -- `item` is a string from `items`
+    across
+        bar
+    as
+        item
+    loop
+        {EXECUTION_ENVIRONMENT}.sleep (100_000_000) -- Imitate some long work
+
+        bar.put_line ("Processed: " + item) -- `item` is a string from `items`
+        -- To not break the bar, we also use `put_line`, see below
     end
 end
 ```
@@ -55,7 +67,11 @@ local
     bar: PB_PROGRESS_BAR
 do
     create bar.make_with_total (10_000)
-    from until bar.has_finished loop
+
+    from
+    until
+        bar.has_finished
+    loop
         if bar.absolute_progress \\ 100 = 3 then
             bar.put_line ("Magic number: " + bar.absolute_progress.out)
         end
@@ -65,66 +81,41 @@ do
 end
 ```
 
-To show several bars at once, connect them via `PB_PROGRESS_GROUP`:
+To show several bars at once, connect them via `PB_DISPLAY`:
 
 ```eiffel
 local
     first, second: PB_PROGRESS_BAR
-    group: PB_PROGRESS_GROUP
+    display: PB_DISPLAY
 do
     create first.make_with_total (10)
     create second.make_with_total (20)
-    create group.make (<< first, second >>)
+
+    create display.make
+    display.extend (first)
+    display.extend (second)
+
     first.advance
     second.advance_by (3)
     first.put_line ("Working")
 end
 ```
 
-Create a fixed group before any of its bars are displayed. Configure each bar's
-renderer before grouping. Every update redraws the group in the supplied order;
-finished rows remain visible. Do not replace individual renderers while grouped.
+Create a display before its bars are displayed. Every update redraws the bars in
+the order supplied to `extend`; finished rows remain visible.
 
 ## Formatting
 
-Each bar starts with its own `PB_STANDARD_PROGRESS_RENDERER`, showing a configurable
-bar with percentage, elapsed time, and ETA. For unknown work, use
-`PB_SPINNER_PROGRESS_RENDERER` with configurable phases. It defaults to a
-compact Unicode moon spinner such as `Loading ◑`; counters and elapsed time are
-opt-in with `set_show_count` and `set_show_elapsed`.
+The library provides a set of preconfigured formatter styles. See the
+[formatter guide](docs/formatters.md) for examples and configuration details.
 
-Common styles can be selected through fresh renderer presets such as
-`{PB_RENDERER_PRESETS}.squares`, `{PB_RENDERER_PRESETS}.circles`, and
-`{PB_RENDERER_PRESETS}.pixels`.
+Available styles include:
 
-Spinner presets include `{PB_RENDERER_PRESETS}.moon_spinner`,
-`{PB_RENDERER_PRESETS}.pie_spinner`, `{PB_RENDERER_PRESETS}.line_spinner`,
-`{PB_RENDERER_PRESETS}.pixel_spinner`, and the ASCII fallback
-`{PB_RENDERER_PRESETS}.spinner`.
-
-Compact value presets include `{PB_RENDERER_PRESETS}.counter`,
-`{PB_RENDERER_PRESETS}.countdown`, and `{PB_RENDERER_PRESETS}.stack`.
-
-To select a renderer:
-
-```eiffel
-local
-    renderer: PB_STANDARD_PROGRESS_RENDERER
-do
-    bar.set_description ("Downloading")
-    create renderer.make
-    renderer.set_fill_character ('=')
-    renderer.set_empty_character ('.')
-    bar.set_renderer (renderer)
-end
-```
-
-The standard renderer displays elapsed time as `HH:MM:SS` and ETA as
-`HH:MM:SS`. ETA is shown as `--:--:--` until a known-total bar has positive progress.
-
-To define another presentation, inherit `PB_PROGRESS_RENDERER` and implement
-`format_line (bar: PB_PROGRESS_BAR): STRING_32`. Return one physical line.
-See [formatters](docs/formatters.md).
+- standard cell bars with percentages and timing;
+- phase spinners for work with no known total;
+- counters and countdowns;
+- compact single-glyph progress indicators;
+- bars using alternative character sets.
 
 ## Installation
 
@@ -147,15 +138,15 @@ Install `just`, Gobo, and EiffelStudio. `GOBO` defaults to `~/Projects/gobo`;
 - `just check`: analyze the library and example with both compilers.
 - `just format`: format Eiffel source files.
 
-The renderer showcase is implemented in
+The formatter showcase is implemented in
 [examples/demo/demo_application.e](examples/demo/demo_application.e) and uses
 the configuration in [examples/demo/demo.ecf](examples/demo/demo.ecf). The GIF
 is a real terminal capture made with [VHS](https://github.com/charmbracelet/vhs)
 from the tape in [examples/demo/demo.tape](examples/demo/demo.tape).
 
 Tests exercise progress bounds, completion, formatters, emitted terminal sequences,
-and grouped output. Test renderers override only `emit`, retaining the production
-rendering behavior. CI runs both compilers on Linux, macOS, and Windows.
+and grouped output. Test displays override only `emit`, retaining the production
+display behavior. CI runs both compilers on Linux, macOS, and Windows.
 
 See the [tutorial](docs/tutorial.md), [API reference](docs/reference.md), and
 [demo application](examples/demo/demo_application.e).

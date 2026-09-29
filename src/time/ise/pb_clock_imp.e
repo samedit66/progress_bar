@@ -16,7 +16,7 @@ feature {NONE} -- Initialization
 
 feature -- Status report
 
-	is_started: BOOLEAN
+	has_started: BOOLEAN
 			-- Has the clock been started?
 		do
 			Result := attached started_at
@@ -26,12 +26,8 @@ feature -- Basic operations
 
 	start
 			-- Start measuring elapsed time.
-		require else
-			not_started: not is_started
 		do
 			create started_at.make_now
-		ensure then
-			started: is_started
 		end
 
 feature -- Measurement
@@ -45,8 +41,6 @@ feature -- Measurement
 				create now.make_now
 				Result := now.relative_duration (l_started_at).seconds_count
 			end
-		ensure then
-			non_negative: Result >= 0
 		end
 
 feature {NONE} -- Implementation
