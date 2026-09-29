@@ -7,8 +7,6 @@ feature -- Standard formatters
 			-- Create a formatter with the default style.
 		do
 			create Result.make
-			Result.set_show_phases (False)
-			Result.set_show_elapsed (True)
 		ensure
 			instance_free: class
 		end
@@ -53,23 +51,25 @@ feature -- Standard formatters
 			instance_free: class
 		end
 
-feature -- Spinner formatters
+feature -- Compact and spinner formatters
 
 	counter: PB_FORMATTER
-			-- Create a formatter showing the current progress count.
+			-- Create a compact formatter showing the current progress count.
 		do
 			create Result.make
-			Result.set_show_phases (False)
+			Result.set_show_phases_for_unknown (False)
+			Result.set_show_timing (False)
 			Result.set_show_count (True)
 		ensure
 			instance_free: class
 		end
 
 	countdown: PB_FORMATTER
-			-- Create a formatter showing the remaining progress count.
+			-- Create a compact formatter showing the remaining progress count.
 		do
 			create Result.make
-			Result.set_show_phases (False)
+			Result.set_show_phases_for_unknown (False)
+			Result.set_show_timing (False)
 			Result.set_show_percentage (False)
 			Result.set_show_remaining (True)
 		ensure
@@ -77,51 +77,56 @@ feature -- Spinner formatters
 		end
 
 	spinner: PB_FORMATTER
-			-- Create a formatter using ASCII spinner phases.
+			-- Create a compact formatter using ASCII spinner phases.
 		do
 			create Result.make
 			Result.set_phases ("%/45/%/92/%/124/%/47/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_unknown (True)
+			Result.set_show_timing (False)
 		ensure
 			instance_free: class
 		end
 
 	pie_spinner: PB_FORMATTER
-			-- Create a formatter using pie spinner phases.
+			-- Create a compact formatter using pie spinner phases.
 		do
 			create Result.make
 			Result.set_phases ("%/9719/%/9718/%/9717/%/9716/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_unknown (True)
+			Result.set_show_timing (False)
 		ensure
 			instance_free: class
 		end
 
 	moon_spinner: PB_FORMATTER
-			-- Create a formatter using moon spinner phases.
+			-- Create a compact formatter using moon spinner phases.
 		do
 			create Result.make
 			Result.set_phases ("%/9681/%/9682/%/9680/%/9683/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_unknown (True)
+			Result.set_show_timing (False)
 		ensure
 			instance_free: class
 		end
 
 	line_spinner: PB_FORMATTER
-			-- Create a formatter using line spinner phases.
+			-- Create a compact formatter using line spinner phases.
 		do
 			create Result.make
 			Result.set_phases ("%/9146/%/9147/%/9148/%/9149/%/9148/%/9147/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_unknown (True)
+			Result.set_show_timing (False)
 		ensure
 			instance_free: class
 		end
 
 	pixel_spinner: PB_FORMATTER
-			-- Create a formatter using Braille pixel phases.
+			-- Create a compact formatter using Braille pixel phases.
 		do
 			create Result.make
 			Result.set_phases ("%/10494/%/10487/%/10479/%/10463/%/10367/%/10431/%/10491/%/10493/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_unknown (True)
+			Result.set_show_timing (False)
 		ensure
 			instance_free: class
 		end
@@ -133,7 +138,7 @@ feature -- Compact standard formatters
 		do
 			Result := standard
 			Result.set_phases ("%/32/%/9601/%/9602/%/9603/%/9604/%/9605/%/9606/%/9607/%/9608/")
-			Result.set_show_phases (True)
+			Result.set_show_phases_for_known (True)
 		ensure
 			instance_free: class
 		end

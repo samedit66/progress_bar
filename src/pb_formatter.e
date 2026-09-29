@@ -9,13 +9,21 @@ feature {NONE} -- Initialization
 
 	make
 			-- Create a formatter with the standard progress-bar style.
+			-- Known-total bars use 30 cells; timing and unknown-total phases are enabled.
 		do
-			phases := "%/9681/%/9682/%/9680/%/9683/"
-			width := 20
+				-- Defaults for any bar
+			width := 30
+			show_timing := True
+				-- Defaults for a bar with a known total
 			fill_character := '#'
 			empty_character := ' '
-			show_phases := False
 			show_percentage := True
+			show_remaining := False
+			show_phases_for_known := False
+				-- Defaults for a bar with an unknown total
+			phases := "-\|/"
+			show_phases_for_unknown := True
+			show_count := False
 		end
 
 feature -- Settings
@@ -41,49 +49,56 @@ feature -- Settings
 		end
 
 	set_phases (a_phases: READABLE_STRING_GENERAL)
-			-- Set the phase characters used by spinner and compact styles.
+			-- Set the phase characters used by phase-based styles.
 		require
 			not_empty: not a_phases.is_empty
 		do
 			phases := a_phases.as_string_32
 		end
 
-	set_show_phases (a_show: BOOLEAN)
-			-- Use one phase character instead of a cell bar.
+	set_show_phases_for_known (a_show: BOOLEAN)
+			-- Use one phase character instead of a cell bar for a known-total bar.
 		do
-			show_phases := a_show
+			show_phases_for_known := a_show
+		end
+
+	set_show_phases_for_unknown (a_show: BOOLEAN)
+			-- Use one phase character for an unknown-total bar.
+		do
+			show_phases_for_unknown := a_show
 		end
 
 	set_show_percentage (a_show: BOOLEAN)
-			-- Show percentage instead of `count/total`.
+			-- Show percentage instead of `count/total` for a known-total bar.
 		do
 			show_percentage := a_show
 		end
 
 	set_show_remaining (a_show: BOOLEAN)
-			-- Show remaining work instead of the count.
+			-- Show remaining work instead of the count for a known-total bar.
 		do
 			show_remaining := a_show
 		end
 
 	set_show_count (a_show: BOOLEAN)
-			-- Show the current count for unknown progress.
+			-- Show the current count for an unknown-total bar.
 		do
 			show_count := a_show
 		end
 
-	set_show_elapsed (a_show: BOOLEAN)
-			-- Show elapsed time after the progress value.
+	set_show_timing (a_show: BOOLEAN)
+			-- Show elapsed time after the progress value; enabled by default.
 		do
-			show_elapsed := a_show
+			show_timing := a_show
 		end
 
 feature -- Formatting
 
 	format (a_bar: PB_PROGRESS_BAR): STRING_32
 			-- Return the current state of `a_bar` as one line.
+			-- Includes elapsed time when timing is enabled and ETA is available.
 		do
-			create Result.make (width + 32)
+			create Result.make (width)
 			if not a_bar.description.is_empty then
 				Result.append (a_bar.description)
 				Result.append_character (' ')
@@ -93,7 +108,7 @@ feature -- Formatting
 			else
 				format_unknown (Result, a_bar)
 			end
-			if show_elapsed then
+			if show_timing then
 				append_timing (Result, a_bar)
 			end
 		end
@@ -104,7 +119,7 @@ feature {NONE} -- Formatting details
 		local
 			filled: INTEGER_64
 		do
-			if show_phases then
+			if show_phases_for_known then
 				a_result.append_character (phases [phase_index (a_bar)])
 			elseif not show_remaining then
 				filled := (width * a_bar.progress_ratio).floor
@@ -113,7 +128,7 @@ feature {NONE} -- Formatting details
 				append_n_character (a_result, width - filled, empty_character)
 				a_result.append_character (']')
 			end
-			if not (show_remaining and not show_phases) then
+			if not (show_remaining and not show_phases_for_known) then
 				a_result.append_character (' ')
 			end
 			if show_percentage then
@@ -127,7 +142,7 @@ feature {NONE} -- Formatting details
 
 	format_unknown (a_result: STRING_32; a_bar: PB_PROGRESS_BAR)
 		do
-			if show_phases then
+			if show_phases_for_unknown then
 				a_result.append_character (phases [phase_index (a_bar)])
 			end
 			if show_count then
@@ -201,6 +216,7 @@ feature {NONE} -- Settings
 
 	phases: STRING_32
 			-- Characters used for phase-based progress.
+			-- May be used for both bars with known and unknown totals.
 
 	width: INTEGER
 			-- Number of cells used for a known-total bar.
@@ -211,8 +227,11 @@ feature {NONE} -- Settings
 	empty_character: CHARACTER_32
 			-- Character used for incomplete cells.
 
-	show_phases: BOOLEAN
-			-- Use one phase character instead of a cell bar.
+	show_phases_for_known: BOOLEAN
+			-- Use one phase character instead of a cell bar for a bar with a known total.
+
+	show_phases_for_unknown: BOOLEAN
+			-- Use one phase character instead of a cell bar for a bar with an unknown total.
 
 	show_percentage: BOOLEAN
 			-- Show percentage instead of `count/total`.
@@ -223,7 +242,7 @@ feature {NONE} -- Settings
 	show_count: BOOLEAN
 			-- Show the current count for unknown progress.
 
-	show_elapsed: BOOLEAN
+	show_timing: BOOLEAN
 			-- Append elapsed time after the progress value.
 
 end

@@ -39,9 +39,7 @@ feature {NONE} -- Initialization
 			create description.make_empty
 			create clock.make
 			clock.start
-			create {PB_FORMATTER} formatter.make
-			formatter.set_show_phases (False)
-			formatter.set_show_elapsed (True)
+			formatter := {PB_FORMATTER_PRESETS}.standard
 			create display.make
 			display.extend (Current)
 		end
@@ -55,7 +53,8 @@ feature -- Commands
 		end
 
 	advance_by (a_count: INTEGER_64)
-			-- Advance by `a_count`, keeping progress within its limits.
+			-- Advance by `a_count`, saturating progress at zero and its limit.
+			-- A known-total bar finishes automatically when it reaches its limit.
 		local
 			remaining: INTEGER_64
 		do
@@ -110,6 +109,24 @@ feature -- Commands
 			-- Set the formatter used for this bar.
 		do
 			formatter := a_formatter
+		end
+
+	set_total (a_total: INTEGER_64)
+			-- Set `a_total` as the known progress limit.
+		require
+			valid_total: a_total >= 0
+		do
+			progress_limit := a_total
+			has_total := True
+		end
+
+	set_absolute_progress (a_absolute_progress: INTEGER_64)
+			-- Set the current absolute progress without rendering.
+		require
+			non_negative_progress: a_absolute_progress >= 0
+			progress_within_limit: a_absolute_progress <= progress_limit
+		do
+			absolute_progress := a_absolute_progress
 		end
 
 feature -- Status report
@@ -190,7 +207,7 @@ feature {PB_DISPLAY}
 		end
 
 	formatted: STRING_32
-			-- Return this bar formatted as one display line.
+			-- Return this bar formatted as one display line without writing output.
 		do
 			Result := formatter.format (Current)
 		end

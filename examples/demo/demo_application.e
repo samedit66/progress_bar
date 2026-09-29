@@ -50,7 +50,7 @@ feature {NONE} -- Implementation
 			create bar.make_unknown
 			bar.set_description ("Loading")
 			create formatter.make
-			formatter.set_show_phases (True)
+			formatter.set_show_phases_for_unknown (True)
 			bar.set_formatter (formatter)
 			from
 			until
