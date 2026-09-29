@@ -19,6 +19,7 @@ feature {NONE} -- Initialization
 feature -- Access
 
 	item: G
+			-- Item at the current cursor position.
 		do
 			Result := original_cursor.item
 		end
@@ -26,6 +27,7 @@ feature -- Access
 feature -- Status report
 
 	after: BOOLEAN
+			-- Is the cursor positioned after the last item?
 		do
 			Result := original_cursor.after
 		end
@@ -33,6 +35,7 @@ feature -- Status report
 feature -- Cursor movement
 
 	forth
+			-- Move to the next item and advance the associated progress bar.
 		do
 			bar.advance
 			original_cursor.forth

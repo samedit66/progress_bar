@@ -30,8 +30,15 @@ end
 bar.finish
 ```
 
-Unknown progress displays a counter and must be finished explicitly. To let the
-library advance the bar while an iterable is traversed, use `PB_WRAPPED_BAR [G]`:
+Unknown progress displays a spinner and must be finished explicitly. To show the
+current count, use the `counter` formatter preset:
+
+```eiffel
+bar.set_formatter ({PB_FORMATTER_PRESETS}.counter)
+```
+
+To let the library advance the bar while an iterable is traversed, use
+`PB_WRAPPED_BAR [G]`:
 
 ```eiffel
 local

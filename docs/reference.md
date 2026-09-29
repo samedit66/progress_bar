@@ -12,6 +12,8 @@
 | `put_line (text)` | Print a message above the display |
 | `set_formatter (formatter)` | Choose the formatter for this bar |
 | `set_description (text)` | Set the text before the progress |
+| `set_total (total)` | Set the bar's known total |
+| `set_absolute_progress (progress)` | Set progress without rendering |
 | `absolute_progress` | Current progress |
 | `progress_limit` | Total, or `INTEGER_64.max_value` when unknown |
 | `has_total` / `has_finished` | Current lifecycle state |
@@ -44,10 +46,16 @@ capturing output. Display calls are synchronous and must be made sequentially.
 
 `PB_FORMATTER` formats one bar and contains all presentation settings: width,
 fill and empty characters, phases, percentage, remaining work, count, and
-elapsed time. `format (bar): STRING_32` returns one physical line.
+elapsed time. Known-total bars use 30 cells by default. Timing is enabled by
+default. Use
+`set_show_phases_for_known` or `set_show_phases_for_unknown` to select phase
+output, and `set_show_timing (False)` to omit timing.
+`format (bar): STRING_32` returns one physical line without writing output.
 
 `PB_FORMATTER_PRESETS` provides fresh configured instances such as `squares`,
-`unicode`, `moon_spinner`, `counter`, `countdown`, and `stack`.
+`unicode`, `moon_spinner`, `counter`, `countdown`, and `stack`. Counter,
+countdown, and spinner presets omit timing; `stack` retains the standard timing
+setting.
 
 ## PB_WRAPPED_BAR
 
