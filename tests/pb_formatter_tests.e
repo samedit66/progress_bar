@@ -24,7 +24,7 @@ feature -- Tests
 			create output.make
 			output.extend (bar)
 			bar.render
-			assert_strings_equal ("initial display", "[          ] 0%%%N", output.captured.to_string_8)
+			assert_strings_equal ("initial display", "%/27/[2K%/13/[          ] 0%%%N", output.captured.to_string_8)
 			assert_strings_equal ("render progress", "0", bar.absolute_progress.out)
 			assert_booleans_equal ("render leaves bar open", False, bar.has_finished)
 		end

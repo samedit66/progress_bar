@@ -69,6 +69,7 @@ feature -- Tests
 	test_message_above_all_rows
 		local
 			first, second: PB_PROGRESS_BAR
+			first_clear, second_clear: INTEGER
 			output: PB_CAPTURE_DISPLAY
 		do
 			create first.make_unknown
@@ -81,7 +82,12 @@ feature -- Tests
 			first.advance
 			output.reset
 			second.put_line ("Working")
+			first_clear := output.captured.substring_index ("%/27/[2A", 1)
+			second_clear := output.captured.substring_index ("%/27/[2A", first_clear + 1)
 			assert_true ("message is emitted", output.captured.has_substring ("Working%N"))
+			assert_true ("message row is cleared", output.captured.has_substring ("%/27/[2K%/13/Working%N"))
+			assert_true ("message clears the old block", first_clear > 0)
+			assert_integers_equal ("message clears the old block once", 0, second_clear)
 			assert_true ("unknown row is restored", not output.captured.is_empty)
 			assert_true ("known row is restored", output.captured.has_substring ("0%%"))
 			assert_strings_equal ("first position unchanged", "1", first.absolute_progress.out)

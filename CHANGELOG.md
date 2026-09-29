@@ -2,26 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
+## [1.0.0] - 2026-09-29
 
-The library is moving toward a smaller separation of concerns: one display
-coordinates terminal output, while one configurable formatter describes bar
-state. Grouped progress remains extensible through the display output hook.
-
-### Changed
+### Added
 
 - Replaced `PB_PROGRESS_GROUP` and progress renderer classes with `PB_DISPLAY`
   and the single configurable `PB_FORMATTER` API.
 - Renamed renderer presets to `PB_FORMATTER_PRESETS` and preserved the existing
   standard, spinner, counter, countdown, stack, and character presets.
 - Added the protected `PB_DISPLAY.emit` extension point for redirected output.
-- Updated the demo, documentation, formatting recipe, and tests for the new
-  breaking API.
-
-## [1.0.0] - 2026-09-27
-
-### Added
-
 - Added spinner presets for ASCII, pie, moon, line, and Braille pixel phases.
 - Added `set_show_count` and `set_show_timing` to `PB_FORMATTER`.
 - Added `counter`, `countdown`, and `stack` renderer presets for compact value
@@ -33,9 +22,14 @@ state. Grouped progress remains extensible through the display output hook.
 
 ### Changed
 
+- Updated the demo, documentation, formatting recipe, tests, and README for
+  the new API and formatter set.
+- Updated the demo recording with the message output example.
 - `PB_FORMATTER.make` now uses ASCII phases and elapsed timing by default for
   unknown totals.
 - Compact counter, countdown, and spinner presets disable timing by default.
+- Progress display output now clears terminal rows before redrawing bars or
+  messages, preserving clean output when line lengths change.
 
 ### Compatibility notes
 

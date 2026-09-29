@@ -25,25 +25,18 @@ feature -- Commands
 	render
 			-- Redraw all bars in their display order.
 		do
-			if not bars.is_empty then
-				clear_block
-				across
-					bars
-				as
-					bar
-				loop
-					emit (bar.formatted + "%N")
-				end
-				displayed := True
-			end
+			clear_block
+			render_bars
 		end
 
 	put_line (a_text: READABLE_STRING_GENERAL)
 			-- Print `a_text` above the displayed bars and redraw them.
-		do
-			clear_block
-			emit (a_text.as_string_32 + "%N")
-			render
+			-- Safe to call even when no bars are currently on the screen.
+			do
+				clear_block
+				clear_line
+				emit (a_text.as_string_32 + "%N")
+				render_bars
 		end
 
 feature {NONE} -- Output
@@ -56,9 +49,33 @@ feature {NONE} -- Output
 
 	clear_block
 			-- Move the cursor above the previously displayed block.
+			-- Safe to call when no bars were rendered earlier: nothing happens.
 		do
 			if displayed then
 				emit ("%/27/[" + bars.count.out + "A")
+			end
+		end
+
+	clear_line
+			-- Erase the current terminal row and return to its beginning.
+		do
+			emit ("%/27/[2K%/13/")
+		end
+
+	render_bars
+			-- Write all bars without moving the cursor first.
+			-- Nothing happens when no bars are attached to the display.
+		do
+			if not bars.is_empty then
+				across
+					bars
+				as
+					bar
+				loop
+					clear_line
+					emit (bar.formatted + "%N")
+				end
+				displayed := True
 			end
 		end
 
