@@ -37,7 +37,7 @@ feature {NONE} -- Initialization
 			progress_limit := a_limit
 			has_total := a_has_total
 			create description.make_empty
-			create clock.make
+			create {PB_CLOCK_IMP} clock.make
 			clock.start
 			formatter := {PB_FORMATTER_PRESETS}.standard
 			create display.make
@@ -214,7 +214,7 @@ feature {PB_DISPLAY}
 
 feature {NONE} -- Implementation
 
-	clock: PB_CLOCK_IMP
+	clock: PB_CLOCK
 			-- Clock measuring this bar's lifetime.
 
 	display: PB_DISPLAY
