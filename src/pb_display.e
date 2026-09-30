@@ -32,11 +32,11 @@ feature -- Commands
 	put_line (a_text: READABLE_STRING_GENERAL)
 			-- Print `a_text` above the displayed bars and redraw them.
 			-- Safe to call even when no bars are currently on the screen.
-			do
-				clear_block
-				clear_line
-				emit (a_text.as_string_32 + "%N")
-				render_bars
+		do
+			clear_block
+			clear_line
+			emit (a_text.as_string_32 + "%N")
+			render_bars
 		end
 
 feature {NONE} -- Output

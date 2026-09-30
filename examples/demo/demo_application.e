@@ -27,11 +27,9 @@ feature {NONE} -- Implementation
 			create formatter.make
 			formatter.set_fill_character (a_fill)
 			formatter.set_empty_character (a_empty)
-
 			create bar.make_with_total (30)
 			bar.set_description (a_name)
 			bar.set_formatter (formatter)
-
 			from
 			until
 				bar.has_finished
@@ -51,11 +49,9 @@ feature {NONE} -- Implementation
 			create formatter.make
 			formatter.set_show_phases_for_unknown (True)
 			formatter.set_show_timing (False)
-
 			create bar.make_unknown
 			bar.set_description ("Loading")
 			bar.set_formatter (formatter)
-
 			from
 			until
 				i = 7
@@ -64,7 +60,6 @@ feature {NONE} -- Implementation
 				pause
 				i := i + 1
 			end
-
 			bar.finish
 		end
 
@@ -74,7 +69,6 @@ feature {NONE} -- Implementation
 			bar: PB_PROGRESS_BAR
 		do
 			create bar.make_with_total (50)
-
 			from
 			until
 				bar.has_finished
@@ -82,9 +76,7 @@ feature {NONE} -- Implementation
 				if bar.absolute_progress \\ 10 = 0 then
 					bar.put_line ("Processed batch " + bar.absolute_progress.out + "/" + bar.progress_limit.out)
 				end
-
 				pause
-
 				bar.advance
 			end
 		end
@@ -98,11 +90,9 @@ feature {NONE} -- Implementation
 		do
 			create outer.make_with_total (6)
 			create inner.make_with_total (60)
-
 			create display.make
 			display.extend (outer)
 			display.extend (inner)
-
 			from
 				i := 1
 			until
@@ -112,9 +102,7 @@ feature {NONE} -- Implementation
 					outer.advance
 				end
 				i := i + 1
-
 				pause
-
 				inner.advance
 			end
 		end
